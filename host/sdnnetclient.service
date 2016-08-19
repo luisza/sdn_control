@@ -1,0 +1,12 @@
+[Unit]
+Description=Overlay network provider
+Wants=network.target
+Before=network.target network.service
+
+[Service]
+ExecStart=python /usr/bin/client_network.py
+Type=forking
+PIDFile=/var/lib/sdnnetclient/sdnnetclient.pid
+
+[Install]
+WantedBy=multi-user.target

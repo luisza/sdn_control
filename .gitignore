@@ -1,0 +1,11 @@
+*.pyc
+.project
+.pydevproject
+.settings/
+db.sqlite3
+Wiki/
+doc/api/build
+rsa_key.pem
+keys
+db.sqlite3
+sdnctl_server_log.log
