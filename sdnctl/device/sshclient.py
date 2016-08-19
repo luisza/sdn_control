@@ -9,12 +9,17 @@ Free as freedom will be 15/8/2016
 from __future__ import unicode_literals
 import spur
 import logging
+try:
+    from django.conf import settings
+    SSH_USER = settings.SSH_USER
+except:
+    SSH_USER = "root"
 
 
 class SSHConnection(object):
 
     def __init__(self, host, port=22,
-                 user="root",
+                 user=SSH_USER,
                  key_path='rsa_key.pem',
                  log_file="sdnctl_server_log.log"):
         self.host = host
