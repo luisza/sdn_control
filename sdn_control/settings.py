@@ -121,4 +121,4 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
-SSH_USER = "root"
+SSH_USER = "cigestion"
