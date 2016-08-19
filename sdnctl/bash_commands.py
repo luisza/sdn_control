@@ -21,4 +21,4 @@ BASH_ADD_PORT = SUDO + "ovs-vsctl add-port %(br_name)s %(port_name)s \
  options:remote_ip=%(remote_ip)s; "
 BASH_ADD_OVS_PORT = SUDO + "ovs-vsctl add-port %(name)s %(br_name)s \
 -- set interface %(br_name)s type=gre options:remote_ip=%(remote_ip)s; "
-BASH_SET_IP = "ip addr add %(cidr) broadcast %(broadcast)s dev %(iface)s; "
+BASH_SET_IP = "ip addr add %(cidr)s broadcast %(broadcast)s dev %(iface)s; "
