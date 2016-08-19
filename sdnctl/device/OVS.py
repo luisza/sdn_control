@@ -11,13 +11,13 @@ from sdnctl.device.sshclient import SSHConnection
 
 import re
 from sdnctl.models import BridgeLink
-
-BASH_ADD_BRIDGE = "ovs-vsctl add-br %(name)s; ip link set %(name)s up multicast on mtu 1420; ovs-vsctl set-controller %(name)s tcp:%(controller_url)s; "
-BASH_DEL_BRIDGE = "ovs-vsctl del-br %s; "
-BASH_SHOW_BRIDGE = 'ovs-vsctl show | grep "Bridge"'
-BASH_ADD_PORT = "ovs-vsctl add-port %(br_name)s %(port_name)s  -- set interface %(port_name)s type=gre options:key=%(key)s options:remote_ip=%(remote_ip)s; "
-
-BASH_ADD_OVS_PORT = "ovs-vsctl add-port %(name)s %(br_name)s -- set interface %(br_name)s type=gre options:remote_ip=%(remote_ip)s; "
+from sdnctl.bash_commands import (
+    BASH_ADD_BRIDGE,
+    BASH_DEL_BRIDGE,
+    BASH_SHOW_BRIDGE,
+    BASH_ADD_PORT,
+    BASH_ADD_OVS_PORT
+)
 
 
 class OVSManager(object):
