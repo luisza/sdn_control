@@ -16,7 +16,8 @@ from sdnctl.bash_commands import (
     BASH_DEL_BRIDGE,
     BASH_SHOW_BRIDGE,
     BASH_ADD_PORT,
-    BASH_ADD_OVS_PORT
+    BASH_ADD_OVS_PORT,
+    BASH_ADD_INTERNAL_PORT,
 )
 
 
@@ -53,6 +54,13 @@ class OVSManager(object):
             bash_cmd += BASH_ADD_BRIDGE % (
                 {'name': bridge.name,
                  'controller_url': self.instance.controller_url})
+            if bridge.admin_ifaces:
+                for port_name in bridge.admin_ifaces.split(","):
+                    port_name = port_name.strip()
+                    bash_cmd += BASH_ADD_INTERNAL_PORT % {
+                        'br_name': bridge.name,
+                        'port_name': port_name,
+                    }
         if bash_cmd:
             self._bash.execute(bash_cmd)
 
