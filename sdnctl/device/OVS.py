@@ -51,6 +51,9 @@ class OVSManager(object):
 
     def add_bridges(self):
         bash_cmd = ""
+        exclude = []
+        if self.instance.ignore_bridge:
+            exclude = self.instance.ignore_bridge.split(",")
         for bridge in self.instance.networkbridge_set.all():
             bash_cmd += BASH_ADD_BRIDGE % (
                 {'name': bridge.name,
@@ -58,6 +61,8 @@ class OVSManager(object):
             if bridge.admin_ifaces:
                 for index, port_name in enumerate(
                         bridge.admin_ifaces.split(",")):
+                    if port_name in exclude:
+                        continue
                     port_name = port_name.strip()
                     bash_cmd += BASH_ADD_INTERNAL_PORT % {
                         'br_name': bridge.name,
@@ -68,7 +73,7 @@ class OVSManager(object):
                             'cidr': bridge.base_ip + "/" + get_net_size(
                                 bridge.netmask.split(".")),
                             'broadcast': bridge.broadcast,
-                            'iface': port_name
+                            'iface': bridge.name
                         }
         if bash_cmd:
             self._bash.execute(bash_cmd)
