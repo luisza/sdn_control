@@ -19,7 +19,7 @@ class OVS(models.Model):
     administrative_ip = models.GenericIPAddressField()
     ignore_bridge = models.CharField(
         max_length=256,
-        help_text="coma separated name ej br0,br1",
+        help_text="Coma separated name ej br0,br1",
         null=True, blank=True)
 
     def __str__(self):
@@ -34,6 +34,11 @@ class NetworkBridge(models.Model):
     base_ip = models.GenericIPAddressField()
     netmask = models.CharField(max_length=33)
     broadcast = models.GenericIPAddressField()
+    admin_ifaces = models.CharField(
+        max_length=256,
+        help_text="Coma separated name ej ens160,ens192",
+        null=True, blank=True
+    )
 
     def __str__(self):
         return "Bridge %s --> %s addr: %s netmask: %s broadcast: %s" % (

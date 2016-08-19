@@ -14,6 +14,7 @@ ip link set %(name)s up multicast on mtu 1420; " + SUDO + "\
 ovs-vsctl set-controller %(name)s tcp:%(controller_url)s; "
 BASH_DEL_BRIDGE = SUDO + "ovs-vsctl del-br %s; "
 BASH_SHOW_BRIDGE = SUDO + 'ovs-vsctl show | grep "Bridge"'
+BASH_ADD_INTERNAL_PORT = SUDO + 'ovs-vsctl add-port %(br_name)s %(port_name)s'
 BASH_ADD_PORT = SUDO + "ovs-vsctl add-port %(br_name)s %(port_name)s \
  -- set interface %(port_name)s type=gre options:key=%(key)s \
  options:remote_ip=%(remote_ip)s; "
