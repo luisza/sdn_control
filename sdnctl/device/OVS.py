@@ -18,7 +18,8 @@ from sdnctl.bash_commands import (
     BASH_ADD_PORT,
     BASH_ADD_OVS_PORT,
     BASH_ADD_INTERNAL_PORT,
-)
+    BASH_SET_IP)
+from sdnctl.device.CIDR import get_net_size
 
 
 class OVSManager(object):
@@ -55,12 +56,20 @@ class OVSManager(object):
                 {'name': bridge.name,
                  'controller_url': self.instance.controller_url})
             if bridge.admin_ifaces:
-                for port_name in bridge.admin_ifaces.split(","):
+                for index, port_name in enumerate(
+                        bridge.admin_ifaces.split(",")):
                     port_name = port_name.strip()
                     bash_cmd += BASH_ADD_INTERNAL_PORT % {
                         'br_name': bridge.name,
                         'port_name': port_name,
                     }
+                    if index == 0:
+                        bash_cmd += BASH_SET_IP % {
+                            'cidr': bridge.address + get_net_size(
+                                bridge.netmask),
+                            'broadcast': bridge.broadcast,
+                            'iface': port_name
+                        }
         if bash_cmd:
             self._bash.execute(bash_cmd)
 
