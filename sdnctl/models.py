@@ -16,6 +16,11 @@ class OVS(models.Model):
                                       help_text="127.0.0.1:6633",
                                       default="127.0.0.1:6633"
                                       )
+    administrative_ip = models.GenericIPAddressField()
+    ignore_bridge = models.CharField(
+        max_length=256,
+        help_text="coma separated name ej br0,br1",
+        null=True, blank=True)
 
     def __str__(self):
         return self.control_ip

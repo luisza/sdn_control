@@ -25,7 +25,7 @@ class OVSManager(object):
 
     def __init__(self, obj):
         self.instance = obj
-        self._bash = SSHConnection(obj.control_ip)
+        self._bash = SSHConnection(obj.administrative_ip)
 
     def get_bridges(self):
         result = self._bash.execute(BASH_SHOW_BRIDGE,
@@ -37,8 +37,12 @@ class OVSManager(object):
 
     def clean(self):
         bash_cmd = ""
+        exclude = []
+        if self.instance.ignore_bridge:
+            exclude = self.instance.ignore_bridge.split(",")
         for bridge in self.get_bridges():
-            bash_cmd += BASH_DEL_BRIDGE % (bridge)
+            if bridge not in exclude:
+                bash_cmd += BASH_DEL_BRIDGE % (bridge)
 
         if bash_cmd:
             self._bash.execute(bash_cmd)
