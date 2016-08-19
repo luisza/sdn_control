@@ -66,7 +66,7 @@ class OVSManager(object):
                     if index == 0:
                         bash_cmd += BASH_SET_IP % {
                             'cidr': bridge.base_ip + get_net_size(
-                                bridge.netmask),
+                                bridge.netmask.split('.')),
                             'broadcast': bridge.broadcast,
                             'iface': port_name
                         }
