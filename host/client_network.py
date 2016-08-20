@@ -6,6 +6,7 @@ import subprocess
 import logging
 from datetime import datetime
 import time
+import socket
 
 SLEEP_TIME = 25  # seconds
 BASH_CREATE_TUNNEL = """
@@ -13,11 +14,13 @@ ip link add %(iface)s type gretap local %(ip_local)s remote %(ip_remote)s key %(
 ip link set %(iface)s up multicast on mtu 1420
 """
 BASH_SET_IP = """ifconfig %(iface)s %(addr)s  netmask %(netmask)s broadcast %(broadcast)s"""
-BASH_SET_ROUTES = "%s"
-BASH_DEL_TUNNEL = "ip link del %s"
-
+BASH_DEL_TUNNEL = "ip link del %s; "
+BASH_ADD_ROUTE = "ip route add %s dev %s; "
+BASH_ADD_ROUTE_VIA = "ip route add %(net)s via %(via)s dev %(dev)s; "
 BASH_SET_ROUTE_VIA = "ip link set dev %(dev)s up; ip route add %(net)s/%(mask)s dev %(dev)s; ip route add %(net)s via %(via)s dev %(dev)s; "
 LIST_INTERFACES = "ls /sys/class/net"
+BASH_LIST_ROUTE = "ip route list"
+BASH_DEL_ROUTE = "ip route del %s; "
 
 
 class Bash:
@@ -43,6 +46,12 @@ class Host:
                  log_file="log_client_network.log"):
         self.control_url = control_url
         self._bash = Bash(log_file=log_file)
+
+    def get_ip_base_interface(self):
+        base_name = self.get_base_interface()
+        info = netifaces.ifaddresses(base_name)
+        return info[netifaces.AF_INET][0]['addr']
+        
 
     def get_base_interface(self):
         if self._base_interface is None:
@@ -99,7 +108,7 @@ class Host:
 
         """{
             dev_iface = [{iface: 'eth0', addr: '',
-						netmask: '', broadcast: '' }]
+                        netmask: '', broadcast: '' }]
             dev_tunnel = [
                     { iface: 'host0', ip_local: '' 
                       ip_remote: '' key:'' }
@@ -128,29 +137,37 @@ class Host:
 
     def set_routes(self, route_list):
         routes = ""
+        devs = {}
         for route in route_list:
+            if route['dev'] not in devs:
+                devs[route['dev']] = 0
             if 'via' in route:
-                net_tmp = route['net'].split("/")
-                net, mask = net_tmp[0], net_tmp[
-                    1] if len(net_tmp) > 1 else "32"
-                routes += BASH_SET_ROUTE_VIA % {
-                    'dev': route['dev'],
-                    'net': net,
-                    'mask': mask,
-                    'via': route['via']
-                }
+                if devs[route['dev']] == 0:
+                    net_tmp = route['net'].split("/")
+                    net, mask = net_tmp[0], net_tmp[
+                        1] if len(net_tmp) > 1 else "32"
+                    routes += BASH_SET_ROUTE_VIA % {
+                        'dev': route['dev'],
+                        'net': net,
+                        'mask': mask,
+                        'via': route['via']
+                    }
+                    devs[route['dev']] += 1
+                else:
+                    routes += BASH_ADD_ROUTE_VIA % route
+                    devs[route['dev']] += 1
 
             else:
-                routes += "ip route add %s dev %s; " % (
+                routes += BASH_ADD_ROUTE % (
                     route['net'],
                     route['dev']
                 )
 
-        self._bash.execute(BASH_SET_ROUTES % (routes,))
+        self._bash.execute(routes)
 
     def remove_gateways(self):
         # gws = netifaces.gateways()  # Sorry not working
-        output = self._bash.execute("ip route list")
+        output = self._bash.execute(BASH_LIST_ROUTE)
         routes = []
         for line in output.split("\n"):
             if not line:
@@ -164,9 +181,57 @@ class Host:
 
         exec_cmd = ""
         for route in routes:
-            exec_cmd += "ip route del %s; " % route
+            exec_cmd += BASH_DEL_ROUTE % route
         self._bash.execute(exec_cmd)
 
+
+class Server:
+    port = 9798
+    server_address = None
+    sock = None
+
+    def __init__(self, host):
+        self._host = host
+    
+    def get_socket_bind_address(self):
+        ip_addr = self._host.get_ip_base_interface()
+        return (ip_addr, self.port)
+
+    def connect(self):
+        self.sock = socket.socket(
+            socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.bind(self.server_address)
+        self.sock.listen(1)
+
+    def disconnect(self):
+        self.sock.setblocking(False)
+        self.sock.close()
+
+    def listen(self):
+        self.server_address=self.get_socket_bind_address()
+
+        logging.info("Listen %s:%d" % self.server_address)
+        finish = False
+        self.connect()
+        while not finish:
+            connection, client_address = self.sock.accept()
+            try:
+                data = connection.recv(2)
+                value = int(data)
+                if value == 1:
+                    finish = True
+            except:
+                pass
+            finally:
+                connection.close()
+        self.disconnect()
+        self.reload()
+
+
+    def reload(self):
+        self._host.delete_tunnels()
+        self._host.get_ips_from_control()
+        self.listen()
 
 if __name__ == '__main__':
     import ConfigParser
@@ -179,5 +244,7 @@ if __name__ == '__main__':
     host = Host(control_url=config.get('basic', 'control_url'),
                 log_file=config.get('basic', 'log_file')
                 )
-    host.delete_tunnels()
-    host.get_ips_from_control()
+    #host.delete_tunnels()
+    #host.get_ips_from_control()
+    server = Server(host)
+    server.listen()

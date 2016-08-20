@@ -125,14 +125,3 @@ class OVSManager(object):
                 }
 
         self._bash.execute(bash_cmd)
-
-
-def ovs_action_restart(modeladmin, request, queryset):
-    for ovs in queryset:
-        ovsmanager = OVSManager(ovs)
-        ovsmanager.clean()
-        ovsmanager.add_bridges()
-        ovsmanager.add_ports()
-        ovsmanager.add_internal_port_connections()
-
-    ovs_action_restart.short_description = "Restart OVS"

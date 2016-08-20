@@ -1,6 +1,7 @@
 from django.contrib import admin
 from sdnctl import models
-from sdnctl.device.OVS import ovs_action_restart
+from sdnctl.actions.HostActions import host_action_restart
+from sdnctl.actions.OVSActions import ovs_action_restart
 
 # Register your models here.
 
@@ -35,6 +36,7 @@ class Logical_NICInline(admin.StackedInline):
 
 class HostAdmin(admin.ModelAdmin):
     inlines = [NICInline, Logical_NICInline]
+    actions = [host_action_restart]
 
 admin.site.register(models.OVS, OVSAdmin)
 admin.site.register(models.Host, HostAdmin)
