@@ -28,7 +28,6 @@ class SocketClient:
 
     def close(self):
         self.socket.close()
-
         self.socket = None
 
     def execute(self, msg="1"):
