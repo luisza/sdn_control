@@ -51,7 +51,6 @@ class Host:
         base_name = self.get_base_interface()
         info = netifaces.ifaddresses(base_name)
         return info[netifaces.AF_INET][0]['addr']
-        
 
     def get_base_interface(self):
         if self._base_interface is None:
@@ -192,7 +191,7 @@ class Server:
 
     def __init__(self, host):
         self._host = host
-    
+
     def get_socket_bind_address(self):
         ip_addr = self._host.get_ip_base_interface()
         return (ip_addr, self.port)
@@ -208,7 +207,7 @@ class Server:
         self.sock.close()
 
     def listen(self):
-        self.server_address=self.get_socket_bind_address()
+        self.server_address = self.get_socket_bind_address()
 
         logging.info("Listen %s:%d" % self.server_address)
         finish = False
@@ -227,7 +226,6 @@ class Server:
         self.disconnect()
         self.reload()
 
-
     def reload(self):
         self._host.delete_tunnels()
         self._host.get_ips_from_control()
@@ -244,7 +242,7 @@ if __name__ == '__main__':
     host = Host(control_url=config.get('basic', 'control_url'),
                 log_file=config.get('basic', 'log_file')
                 )
-    #host.delete_tunnels()
-    #host.get_ips_from_control()
+    host.delete_tunnels()
+    host.get_ips_from_control()
     server = Server(host)
     server.listen()
