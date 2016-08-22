@@ -134,3 +134,36 @@ class Logical_NIC(NIC, Logical_NIC_control):
 
     def get_iface_info(self):
         return Logical_NIC_control.get_iface_info(self)
+
+
+@python_2_unicode_compatible
+class DHCP_Server(models.Model):
+    bridge = models.ForeignKey(NetworkBridge)
+
+    address = models.GenericIPAddressField(null=True, blank=True)
+
+    start_ip = models.GenericIPAddressField()
+    end_ip = models.GenericIPAddressField()
+    netmask = models.CharField(max_length=33, null=True, blank=True)
+    broadcast = models.GenericIPAddressField(null=True, blank=True)
+
+    # both netmask y broadcast
+    lease_time = models.CharField(max_length=10,
+                                  default="infinite")
+
+    def __str__(self):
+        return "%s,%s" % (
+            self.start_ip,
+            self.end_ip
+        )
+
+
+class DHCP_Static_IP(models.Model):
+    dhcp_server = models.ForeignKey(DHCP_Server)
+    mac = models.CharField(max_length=100)
+    address = models.GenericIPAddressField(null=True, blank=True)
+    hostname = models.CharField(max_length=33, null=True, blank=True)
+
+    lease_time = models.CharField(max_length=10,
+                                  default="infinite",
+                                  help_text="03m/infinite/ignore")
