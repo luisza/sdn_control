@@ -9,6 +9,15 @@ You can create an overlay network based on tunnels gre (greptap) and OpenVswitch
 So you can create sdn networks over common networks without any special 
 configuration on physical network device or network.
 
+## Features
+
+* OVS basic control (restart action only for now)
+* OVS bridge for isolated networks
+* Create Gre (gretap) tunnels for host
+* DHCP server
+* SDN controller url (tested with ryu)
+
+
 ## Requirements and Installation
 
 This software has 2 sections *host* and *server*, that has diferents requirements
