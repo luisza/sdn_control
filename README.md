@@ -1,7 +1,7 @@
 # sdn_control
 Network overlay web controller and host client
 
-###  :warning: this software is in development and is not stable jet so is not for production environment
+###  :warning: this software is in development and is not stable yet so is not for production environment
 
 ## What I can do with this software?
 
