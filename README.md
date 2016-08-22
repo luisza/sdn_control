@@ -48,7 +48,7 @@ See requirement.txt for python requirements. run
 Install and configure openvswitch in one or more machines (:confused: sorry out of scope)
 
 Install and configure openssh server in all machines with openvswitch and configure 
-login with rsa key howto (here)[http://www.linuxproblem.org/art_9.html]. 
+login with rsa key howto [here](http://www.linuxproblem.org/art_9.html). 
 
 You also need to set in sdn_control/settings.py the ssh login user
 
