@@ -52,3 +52,33 @@ class SSHConnection(object):
 
     def close(self):
         self.shell = None
+
+
+class DebugSshClient(object):
+
+    def __init__(self, host, port=22,
+                 user=SSH_USER,
+                 key_path='rsa_key.pem',
+                 log_file="sdnctl_server_log.log"):
+        self.host = host
+        self.port = port
+        self.key_path = key_path
+        self.user = user
+        self.shell = None
+        logging.basicConfig(filename=log_file, level=logging.INFO)
+
+    def connect(self):
+        logging.info("DEBUGBASH:\t\tConnecting with %s@%s" % (self.user,
+                                                              self.host))
+        pass
+
+    def execute(self, str_command, allow_error=False):
+        logging.info("BASH:(%s@%s)\t\t%s" % (
+            self.user,
+            self.host,
+            str_command.replace(";", ";\n")))
+
+        return ""
+
+    def close(self):
+        pass
