@@ -17,8 +17,8 @@ class NICLogic(object):
 
         if self.default_gw:
             routes.append(
-                          {'net': 'default', 'dev': self.interface}
-                          )
+                {'net': 'default', 'dev': self.interface}
+            )
 
         for route in self.routes.all():
             route_info = route.get_info()
@@ -75,6 +75,7 @@ class HostLogic(object):
             'dev_tunnel': [],
             'route': []
         }
+        dhcp = []
         for nic in self.nic_set.all().order_by('default_gw'):
             nic.get_routes(routes=host_info['route'])
             if hasattr(nic, 'logical_nic'):
@@ -84,10 +85,15 @@ class HostLogic(object):
 
                 host_info['dev_tunnel'].append(
                     nic.logical_nic.get_tunnel_info())
+
+                if nic.logical_nic.is_dhcp:
+                    dhcp.append(nic.interface)
             else:
                 host_info['dev_iface'].append(
                     nic.get_iface_info())
 
+        if dhcp:
+            host_info['dhcp'] = dhcp
         return host_info
 
     def get_control_nic(self):

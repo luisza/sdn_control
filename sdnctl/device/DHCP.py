@@ -81,7 +81,7 @@ class DHCP(object):
 
         self._bash.execute(bash_cmd)
 
-    def del_dhcp_server(self):
+    def del_dhcp_server(self, allow_error=False):
 
         pid = DHCP_PID % self.instance.pk
         bash_cmd = BASH_KILL_PROGRAM % pid
@@ -92,7 +92,7 @@ class DHCP(object):
         }
         vnetname = 'dhcp_%d' % (self.instance.pk)
         bash_cmd += BASH_DEL_LINK % vnetname
-        self._bash.execute(bash_cmd)
+        self._bash.execute(bash_cmd, allow_error=allow_error)
 
     def __init__(self, instance, bash):
         self.instance = instance

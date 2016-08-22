@@ -21,6 +21,7 @@ BASH_SET_ROUTE_VIA = "ip link set dev %(dev)s up; ip route add %(net)s/%(mask)s 
 LIST_INTERFACES = "ls /sys/class/net"
 BASH_LIST_ROUTE = "ip route list"
 BASH_DEL_ROUTE = "ip route del %s; "
+BASH_DHCP_CLIENT = "dhclient %s"
 
 
 class Bash:
@@ -116,6 +117,7 @@ class Host:
                 { net: 'default', dev: 'eth0'}
                 { net: '' via: '' dev: '' }
                     ]
+            dhcp = ['eth0', 'host0' ]
             }
         """
 
@@ -133,6 +135,13 @@ class Host:
 
         self.remove_gateways()
         self.set_routes(data['route'])
+
+        if 'dhcp' in data:
+            self.call_dhcp(data['dhcp'])
+
+    def call_dhcp(self, ifaces):
+        for iface in ifaces:
+            self._bash.execute(BASH_DHCP_CLIENT % iface)
 
     def set_routes(self, route_list):
         routes = ""
