@@ -12,7 +12,7 @@ chmod 664 /etc/systemd/system/ryu.service
 
 ryu_service=$1
 
-sed -i "s/APPS/\/etc\/ryuctrl\/apps/ "$ryu_service"/g" /etc/systemd/system/ryu.service
+sed -i "s/APPS/\/etc\/ryuctrl\/apps\/"$ryu_service"/g" /etc/systemd/system/ryu.service
 
 systemctl daemon-reload
 systemctl enable ryu.service
