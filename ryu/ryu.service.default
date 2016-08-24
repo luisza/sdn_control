@@ -1,0 +1,13 @@
+[Unit]
+Description=Ryu Controller
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ryu-manager --app-lists APPS
+
+[Install]
+WantedBy=multi-user.target
+
+
+
