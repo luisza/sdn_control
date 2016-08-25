@@ -37,3 +37,5 @@ systemctl daemon-reload
 systemctl enable sdnnetclient
 echo "Service sdnnetclient enabled"
 echo "Service isn't started by default use systemctl start sdnnetclient"
+
+iptables -A INPUT -p tcp -m tcp --dport 9798 -j ACCEPT
