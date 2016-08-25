@@ -55,7 +55,7 @@ class DHCP(object):
             self.instance.start_ip, self.instance.end_ip
         )
         if self.instance.broadcast and self.instance.netmask:
-            dhcp_range += ',static,%s,%s' % (
+            dhcp_range += ',%s,%s' % (
                 self.instance.netmask,
                 self.instance.broadcast
             )

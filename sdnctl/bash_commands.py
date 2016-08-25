@@ -34,7 +34,7 @@ DHCP_PID = "/var/run/sdndhcp/hostfile_%d.pid"
 BASH_DHCP = BASH_CREATE_RUN_DIR + SUDO + "ip link add name %(iface)s type veth peer name peer_%(iface)s; \
 " + SUDO + "ip link set dev %(iface)s up; " + SUDO + \
     SUDO + "ip link set dev peer_%(iface)s up; " + \
-    SUDO + "ifconfig %(iface)s %(address)s %(netmask)s %(broadcast)s; " + \
+    SUDO + "ifconfig %(iface)s %(address)s %(netmask)s %(broadcast)s; "+SUDO + \
     "dnsmasq --no-hosts --no-resolv %(host_file)s --pid-file=%(pid)s --log-facility=/var/log/dnsdhcp_%(iface)s.log --interface=%(iface)s --dhcp-range=%(dhcp_range)s --listen-address=%(address)s --bind-interfaces; "
 
 BASH_KILL_PROGRAM = SUDO + "kill -9 ´cat %s´; "

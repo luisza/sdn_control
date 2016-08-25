@@ -4,7 +4,7 @@ After=syslog.target network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/ryu-manager --app-lists APPS
+ExecStart=/usr/bin/ryu-manager  --log-file=/var/log/ryu.log --app-lists APPS
 
 [Install]
 WantedBy=multi-user.target
