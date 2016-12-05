@@ -34,7 +34,12 @@ DHCP_PID = "/var/run/sdndhcp/hostfile_%d.pid"
 BASH_DHCP = BASH_CREATE_RUN_DIR + SUDO + "ip link add name %(iface)s type veth peer name peer_%(iface)s; \
 " + SUDO + "ip link set dev %(iface)s up; " + SUDO + \
     SUDO + "ip link set dev peer_%(iface)s up; " + \
-    SUDO + "ifconfig %(iface)s %(address)s %(netmask)s %(broadcast)s; "+SUDO + \
-    "dnsmasq --no-hosts --no-resolv %(host_file)s --pid-file=%(pid)s --log-facility=/var/log/dnsdhcp_%(iface)s.log --interface=%(iface)s --dhcp-range=%(dhcp_range)s --listen-address=%(address)s --bind-interfaces; "
+    SUDO + "ifconfig %(iface)s %(address)s %(netmask)s %(broadcast)s; " + \
+    SUDO + "dnsmasq --no-hosts --no-resolv %(host_file)s --pid-file=%(pid)s --log-facility=/var/log/dnsdhcp_%(iface)s.log --interface=%(iface)s --dhcp-range=%(dhcp_range)s --listen-address=%(address)s --bind-interfaces; " + \
+    SUDO + "ifconfig peer_%(iface)s %(address)s %(netmask)s %(broadcast)s; "
 
 BASH_KILL_PROGRAM = SUDO + "kill -9 ´cat %s´; "
+
+
+BASH_CREATE_CONTROLLER = '/etc/ryuctrl/service_creator.sh %(port)d %(ip)s "%(apps)s" %(wshost)s %(wsport)d'
+BASH_DELETE_CONTROLLER = '/etc/ryuctrl/service_delete.sh %(port)s'

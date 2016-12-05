@@ -9,13 +9,46 @@ from sdnctl.model_logic import NICLogic, HostLogic, RouteLogic,\
 
 
 @python_2_unicode_compatible
+class RyuApp(models.Model):
+    name = models.CharField(max_length=256, default="default switch")
+    app_code = models.CharField(
+        max_length=150, default="ryu.app.simple_switch_13")
+
+    def __str__(self):
+        return self.name
+
+
+@python_2_unicode_compatible
+class SDNController(models.Model):
+    name = models.CharField(max_length=256, default="default sdn controller")
+    control_ip = models.GenericIPAddressField()
+    ip = models.GenericIPAddressField(default="0.0.0.0")
+    port = models.SmallIntegerField(default=6633)
+    apps = models.ManyToManyField(RyuApp)
+
+    wsapi_host = models.GenericIPAddressField(default="0.0.0.0")
+    wsapi_port = models.SmallIntegerField(default=8080)
+
+    def __str__(self):
+        return "%s on  %s:%d" % (self.control_ip, self.ip, self.port)
+
+    def get_apps(self):
+        dev = ""
+        for x in self.apps.all():
+            dev += x.app_code + " "
+        return dev
+
+    def get_controller_ip(self):
+        ip = self.ip
+        if ip in ('0.0.0.0', '127.0.0.1'):
+            ip = self.control_ip
+        return "%s:%s" % (ip, self.port)
+
+
+@python_2_unicode_compatible
 class OVS(models.Model):
     name = models.CharField(max_length=256, default="OVS")
     control_ip = models.GenericIPAddressField()
-    controller_url = models.CharField(max_length=256,
-                                      help_text="127.0.0.1:6633",
-                                      default="127.0.0.1:6633"
-                                      )
     administrative_ip = models.GenericIPAddressField()
     ignore_bridge = models.CharField(
         max_length=256,
@@ -39,6 +72,7 @@ class NetworkBridge(models.Model):
         help_text="Coma separated name ej ens160,ens192",
         null=True, blank=True
     )
+    controller = models.ForeignKey(SDNController, null=True, blank=True)
 
     def __str__(self):
         return "Bridge %s --> %s addr: %s netmask: %s broadcast: %s" % (

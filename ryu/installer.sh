@@ -3,20 +3,18 @@
 # ./installer.sh apps/simple_switch_13.py
 #
 #  iptables -A INPUT -p tcp -m tcp --dport 6633 -j ACCEPT
+
+echo "Remember: First install ryu controller with pip install ryu"
 mkdir -p /etc/ryuctrl/
 rm -rf /etc/ryuctrl/apps
 cp -a apps /etc/ryuctrl/
-
-rm /etc/systemd/system/ryu.service
-cp ryu.service.default /etc/systemd/system/ryu.service
-chmod 664 /etc/systemd/system/ryu.service
-
-ryu_service=$1
-
-sed -i "s/APPS/\/etc\/ryuctrl\/apps\/"$ryu_service"/g" /etc/systemd/system/ryu.service
+cp ryu.service.default /etc/ryuctrl/
+cp service_creator.sh /etc/ryuctrl/service_creator.sh
+cp service_delete.sh /etc/ryuctrl/service_delete.sh
+chmod +x /etc/ryuctrl/service_creator.sh
+chmod +x /etc/ryuctrl/service_delete.sh
 
 
-
-systemctl daemon-reload
-systemctl enable ryu.service
-service ryu restart
+RYU=$(which ryu-manager)
+RYU=${RYU//\//\\\/}
+sed -i "s/RYU/$RYU/g" /etc/ryuctrl/ryu.service.default

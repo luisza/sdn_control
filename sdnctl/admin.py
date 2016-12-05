@@ -1,13 +1,14 @@
 from django.contrib import admin
+
 from sdnctl import models
-from sdnctl.actions.HostActions import host_action_restart
-from sdnctl.actions.OVSActions import ovs_action_restart
 from sdnctl.actions.DHCPAction import dhcp_action_down, dhcp_action_up,\
     dhcp_action_restart
+from sdnctl.actions.HostActions import host_action_restart
+from sdnctl.actions.OVSActions import ovs_action_restart
+from sdnctl.actions.RYUAction import ryu_action_up, ryu_action_down
+
 
 # Register your models here.
-
-
 class NetworkBridgeInline(admin.TabularInline):
     model = models.NetworkBridge
     extra = 1
@@ -51,8 +52,17 @@ class DHCPServerAdmin(admin.ModelAdmin):
     actions = [dhcp_action_up, dhcp_action_down,
                dhcp_action_restart]
 
+
+class SDNControlAdmin(admin.ModelAdmin):
+    list_display = ('name', 'control_ip', 'ip', 'port', 'get_apps')
+    readonly_fields = ('get_apps', )
+    filter_horizontal = ('apps',)
+    actions = [ryu_action_up, ryu_action_down]
+    inlines = [NetworkBridgeInline]
 admin.site.register(models.OVS, OVSAdmin)
 admin.site.register(models.Host, HostAdmin)
 admin.site.register(models.Route)
 admin.site.register(models.BridgeLink)
 admin.site.register(models.DHCP_Server, DHCPServerAdmin)
+admin.site.register(models.SDNController, SDNControlAdmin)
+admin.site.register(models.RyuApp)
