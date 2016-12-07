@@ -1,0 +1,329 @@
+{% load static %}
+<html>
+<head>
+
+<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+<script src="{% static 'js/jquery-1.10.2.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>	
+<script type="text/javascript" src="{% static 'js/vis.js' %}"></script>
+<link href="{% static 'css/vis-network.min.css' %}" rel="stylesheet" type="text/css"/>
+
+
+<script type="text/javascript">
+	var ADMIN_URLS={
+'router_change': "{% url 'admin:network_builder_router_change' 0 %}?_to_field=id&_popup=1",
+'host_change': "{% url 'admin:sdnctl_host_change' 0 %}?_to_field=id&_popup=1",
+'dhcp_change': "{% url 'admin:sdnctl_dhcp_server_change' 0 %}?_to_field=id&_popup=1",
+
+'router_add': "{% url 'admin:network_builder_router_add' %}?_to_field=id&_popup=1",
+'host_add': "{% url 'admin:sdnctl_host_add' %}?_to_field=id&_popup=1",
+'dhcp_add': "{% url 'admin:sdnctl_dhcp_server_add' %}?_to_field=id&_popup=1",
+
+
+		
+	};
+
+	var nodes,
+	    edges,
+	    network;
+	var DIR = '{% static '/img/' %}';
+	var SAVE_URL = '{% url "network_save" %}';
+	var LOAD_NETWORK_URL='{% url "network_load" %}';
+	var num_nodes = 0;
+	var num_edges = 0;
+	var selected_nodes = [];
+	var last_edge=undefined;
+	// convenience method to stringify a JSON object
+	function toJSON(obj) {
+		return JSON.stringify(obj, null, 4);
+	}
+	
+	function network_load(){
+		document.getElementById('loadnw').innerHTML = '<img src="'+DIR+'loading.gif" />'; 
+		var opt =document.getElementById("network_choice").options;
+		var name = opt[opt.selectedIndex].text;
+		$.post(LOAD_NETWORK_URL, {'name': name}).done(function( data ) {
+			 try {
+			 	var obj = JSON.parse(data);
+			 	network_reset();
+			 	var last_node=0;
+			 	var last_edge=0;
+			 	for(var x=0; x<obj.nodes.length; x++){
+			 		nodes.add(obj.nodes[x]);
+			 		if(last_node<obj.nodes[x].id)
+			 			last_node=obj.nodes[x].id;
+			 		
+			 	}
+			 	for(var x=0; x<obj.edges.length; x++){
+			 		edges.add(obj.edges[x]);
+			 		if(last_edge<obj.edges[x].id)
+			 			last_edge=obj.edges[x].id;
+			 	}
+			 	num_nodes = last_node;
+			 	num_edges = last_edge;
+			 	document.getElementById('network_name').value = name;
+			 } catch(err) {
+			 	alert(err.message);
+			 	return 0;
+			 }
+
+    		 document.getElementById('loadnw').innerHTML = ''; 
+  	    });
+	}
+	
+	function network_reset(){
+		var delnodes = nodes.get();
+		var deledges = edges.get();
+		for (var x=0; x<delnodes.length; x++){
+			nodes.remove({ id :delnodes[x].id });
+		}
+		for (var x=0; x<deledges.length; x++){
+			edges.remove({ 	id :deledges[x].id });
+		}
+	}
+	
+	
+	function network_save(){
+		
+		document.getElementById('load').innerHTML = '<img src="'+DIR+'loading.gif" />'; 
+		
+		var nname = document.getElementById('network_name').value;
+		if( nname != ""){
+			var obj = {
+				'nodes': nodes.get(),
+				'edges': edges.get()
+			};
+			params = {
+				'name': nname,
+				'network': toJSON(obj)
+			};
+			$.post(SAVE_URL, params).done(function( data ) {
+    		 document.getElementById('load').innerHTML = ''; 
+  			});
+		}else{
+			alert("Network without name is not valid");
+		}
+		
+	}
+	
+
+	function addNode(element) {
+		try {
+			nodes.add({
+				id : ++num_nodes,
+				type : element,
+				image : DIR + element + '.png',
+				shape : 'image'
+			});
+		} catch (err) {
+			alert(err);
+		}
+	}
+
+	function removeNode() {
+		if(selected_nodes.length>0){
+			try {
+				nodes.remove({
+					id :selected_nodes[0]
+				});
+			} catch (err) {
+				alert(err);
+			}
+		}
+	}
+
+	function addEdge(from, to) {
+		try {
+			edges.add({
+				id : ++num_edges,
+				from : from,
+				to : to
+			});
+		} catch (err) {
+			alert(err);
+		}
+	}
+
+	function removeEdge() {
+		if(last_edge != undefined){
+			try {
+				edges.remove({
+					id : last_edge
+				});
+			} catch (err) {
+				alert(err);
+			}
+		}
+	}
+
+	function node_click_action(params){
+		var nodes = params["nodes"];
+		if (nodes.length > 0) {
+			selected_nodes.push(nodes[0]);
+		} else {
+			selected_nodes = [];
+		}
+		if (selected_nodes.length == 2) {
+			if(selected_nodes[0].id == selected_nodes[1].id){
+				selected_nodes.pop();
+			}else{
+				addEdge(selected_nodes[0], selected_nodes[1]);
+				selected_nodes = [];
+			}
+		}
+		var edge=params['edges'];
+		if (edge.length>0){
+			last_edge=edge[0];
+	   }else{
+	   		last_edge=undefined;
+	   }		
+	}
+	
+	function node_doubleclick_action(params){
+		var nodesid = params["nodes"];
+		var edgesid = params["edges"];
+		var href = undefined;
+		var wname = undefined;
+		if (nodesid.length > 0) {
+			var node = nodes.get().find(function(v){return v.id==nodesid[0];});
+			wname = "nodes__"+nodesid[0];
+			if( node.djvalue == undefined){
+				href = ADMIN_URLS[node.type + "_add"];
+			}else{
+				href = ADMIN_URLS[node.type+"_change"].replace("/0/", "/"+node.djvalue+"/");
+			}
+		}else{
+			if(edgesid.length > 0 ){
+				var edge = edges.get().find(function(v){return v.id==nodesid[0];});
+				wname = "edges__"+nodesid[0];
+				if( edge.djvalue == undefined){
+					href = ADMIN_URLS['edges_add'];
+				}else{
+					href =ADMIN_URLS["edges_change"].replace("/0/", "/"+node.djvalue+"/");
+				}
+			}
+		}
+		
+		win = window.open(href, wname, 'height=500,width=800,resizable=yes,scrollbars=yes');
+        win.focus();		
+			
+	window.dismissChangeRelatedObjectPopup = function(window, value, obj,  new_value){
+		window.close();
+	};
+	window.dismissAddRelatedObjectPopup=function(window, value, obj){
+		var name_list =window.name.split("__");
+		var _type = name_list[0];
+		var id = name_list[1];
+		
+		if( _type == 'nodes'){
+			try{
+				console.log(nodes);
+			nodes.update( [{id: parseInt(id), djvalue: value}] );
+			}catch(e){
+				console.log(e.message);
+			}
+			console.log(_type +"  update "+ id );
+		}
+
+		window.close();
+	};
+			
+	}
+	
+
+
+
+	function draw() {
+		// create an array with nodes
+		nodes = new vis.DataSet();
+
+		// create an array with edges
+		edges = new vis.DataSet();
+
+		// create a network
+		var container = document.getElementById('network');
+		var data = {
+			nodes : nodes,
+			edges : edges
+		};
+		//var options = {};
+		
+		var options = {
+        interaction: {
+         // navigationButtons: true,
+          keyboard: true
+         }
+      	};
+		
+		network = new vis.Network(container, data, options);
+		network.on("click", node_click_action);
+		network.on("doubleClick", node_doubleclick_action);
+	}
+
+    </script>
+<style>
+
+
+#network{
+	width: 85%;
+	display: inline-block;
+	background-color: #fbfbfb;
+}
+#action_buttons{
+	width: 14%;
+	display: inline-block;
+	vertical-align: top;
+}
+
+</style>
+
+</head>
+<body onload="draw();">
+
+
+{% if available_networks %}
+	<label for="network_choice" > Choose one network to load:</label>
+	<select style="min-width: 200px;" name="network_choice" id="network_choice">
+		{% for network in available_networks %}
+		<option value="{{netwotk.name}}"> {{network.name}} </option>
+		{% endfor %}
+	
+	</select> 
+	<button class="btn btn-sm btn-success"  onclick="network_load()"> 
+		<span id="loadnw"></span> Load network </button>
+{% endif %}
+
+
+
+<hr>
+<div id="workarea">
+	<div id="network" ></div>
+	
+	<div id="action_buttons">
+		<h2> Save </h2>
+			<label for="network_name" > Network name:</label>
+			<input type="text" name="network_name" id="network_name"> <br><br>
+			<button class="btn btn-success btn-sm"  onclick="network_save()"> <span id="load"></span>Save Network</button> 
+		<hr>
+			<a onclick="addNode('router')"> <img width="64px" height="64px" src="{%static 'img/router.png' %}"  alt="router"/> </a>
+			<a onclick="addNode('host')"> <img  width="64px" height="64px"  src="{%static 'img/host.png' %}"  alt="host"/> </a>
+			<a onclick="addNode('dhcp')"> <img  width="64px" height="64px"  src="{%static 'img/dhcp.png' %}"  alt="dhcp"/> </a>           
+			<a onclick="addNode('dns')"> <img  width="64px" height="64px"  src="{%static 'img/dns.png' %}"  alt="dns"/> </a>   
+			<a onclick="addNode('nat')"> <img  width="64px" height="64px"  src="{%static 'img/nat.png' %}"  alt="nat" /> </a>           
+			<a onclick="addNode('firewall')"> <img  width="64px" height="64px"  src="{%static 'img/firewall.png' %}"  alt="firewall"/> </a>           
+			<a onclick="addNode('vpn')"> <img  width="64px" height="64px"  src="{%static 'img/vpn.png' %}"  alt="vpn"/> </a>           
+			<hr>
+			<h2> Remove </h2>
+			<div class="btn-group" role="group" aria-label="...">
+			<button class="btn btn-warning btn-sm" onclick="removeEdge()"> Edge</button>
+			<button class="btn btn-default btn-sm"  type="button"> ---  </button>
+			<button class="btn btn-danger btn-sm"  onclick="removeNode()"> Node</button>
+			</div>
+			<button class="btn btn-info btn-sm"  onclick="network_reset()"> Reset </button>
+			
+
+	</div>
+</div>
+
+</body>
+</html>

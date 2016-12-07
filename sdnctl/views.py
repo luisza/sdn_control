@@ -1,10 +1,10 @@
-from django.shortcuts import render, get_object_or_404
 from django.http.response import Http404, JsonResponse
+from django.shortcuts import render, get_object_or_404
+
 from sdnctl.models import Host
 
+
 # Create your views here.
-
-
 def get_host_info(request):
     host_mac = request.GET.get('mac')
     if not host_mac:
