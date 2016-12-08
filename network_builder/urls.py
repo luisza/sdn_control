@@ -15,5 +15,6 @@ urlpatterns = [
 
     url(r'^topology$', views.create_topology),
     url(r'^network/save$', views.save_network, name="network_save"),
-    url(r'network/load$', views.network_load, name="network_load")
+    url(r'network/load$', views.network_load, name="network_load"),
+    url(r'^network/run$', views.network_run, name="network_run"),
 ]
