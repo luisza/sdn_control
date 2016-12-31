@@ -1,21 +1,19 @@
 from django.contrib import admin
 
 from sdnctl import models
-from sdnctl.actions.DHCPAction import dhcp_action_down, dhcp_action_up,\
-    dhcp_action_restart
 from sdnctl.actions.HostActions import host_action_restart
 from sdnctl.actions.OVSActions import ovs_action_restart
 from sdnctl.actions.RYUAction import ryu_action_up, ryu_action_down
 
 
 # Register your models here.
-class NetworkBridgeInline(admin.TabularInline):
-    model = models.NetworkBridge
-    extra = 1
+# class NetworkBridgeInline(admin.TabularInline):
+#     model = models.NetworkBridge
+#     extra = 1
 
 
 class OVSAdmin(admin.ModelAdmin):
-    inlines = [NetworkBridgeInline]
+    #     inlines = [NetworkBridgeInline]
     actions = [ovs_action_restart]
 
 
@@ -31,26 +29,15 @@ class NICInline(admin.StackedInline):
                 exclude.append(nic.pk)
         return nics.exclude(pk__in=exclude)
 
-
-class Logical_NICInline(admin.StackedInline):
-    model = models.Logical_NIC
-    extra = 0
+#
+# class Logical_NICInline(admin.StackedInline):
+#     model = models.Logical_NIC
+#     extra = 0
 
 
 class HostAdmin(admin.ModelAdmin):
-    inlines = [NICInline, Logical_NICInline]
+    inlines = [NICInline, ]  # Logical_NICInline]
     actions = [host_action_restart]
-
-
-class DHCP_static_IPAdmin(admin.StackedInline):
-    model = models.DHCP_Static_IP
-    extra = 0
-
-
-class DHCPServerAdmin(admin.ModelAdmin):
-    inlines = [DHCP_static_IPAdmin]
-    actions = [dhcp_action_up, dhcp_action_down,
-               dhcp_action_restart]
 
 
 class SDNControlAdmin(admin.ModelAdmin):
@@ -58,11 +45,11 @@ class SDNControlAdmin(admin.ModelAdmin):
     readonly_fields = ('get_apps', )
     filter_horizontal = ('apps',)
     actions = [ryu_action_up, ryu_action_down]
-    inlines = [NetworkBridgeInline]
+#     inlines = [NetworkBridgeInline]
+
 admin.site.register(models.OVS, OVSAdmin)
 admin.site.register(models.Host, HostAdmin)
 admin.site.register(models.Route)
-admin.site.register(models.BridgeLink)
-admin.site.register(models.DHCP_Server, DHCPServerAdmin)
+# admin.site.register(models.BridgeLink)
 admin.site.register(models.SDNController, SDNControlAdmin)
 admin.site.register(models.RyuApp)

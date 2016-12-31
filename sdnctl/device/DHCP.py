@@ -7,7 +7,11 @@ Free as freedom will be 21/8/2016
 '''
 
 from __future__ import unicode_literals
-from sdnctl.models import DHCP_Static_IP
+
+from django.db.models.query_utils import Q
+
+from network_builder.models import DHCP_Static_IP, Link
+from network_builder.utils import get_natural_name
 from sdnctl.bash_commands import BASH_CREATE_HOSTFILE, BASH_HOST_FILE_PATH,\
     BASH_DHCP, BASH_ADD_INTERNAL_PORT, BASH_DEL_PORT, DHCP_PID,\
     BASH_KILL_PROGRAM, BASH_DEL_LINK, BASH_CREATE_RUN_DIR
@@ -38,6 +42,27 @@ class DHCP(object):
                 self.instance.pk)
 
         return ""
+
+    def get_primary_nic(self):
+        naturalname = get_natural_name(self.instance)
+        links = Link.objects.filter(
+            Q(to_obj=self.instance.pk,
+              to_naturalname=naturalname
+              ) | Q(
+                from_obj=self.instance.pk,
+                from_naturalname=naturalname
+            )
+        )
+        priNIC = links.filter(is_dhcp=False).first()
+        if not priNIC:
+            priNIC = links.first()
+            setattr(self.instance, 'address', None)
+        else:
+            setattr(self.instance, 'address', priNIC.address)
+
+        if priNIC:
+            setattr(self.instance, 'netmask', priNIC.netmask)
+            setattr(self.instance, 'broadcast', priNIC.broadcast)
 
     def get_ip_address(self):
         address = ""
@@ -75,7 +100,7 @@ class DHCP(object):
         }
 
         bash_cmd += BASH_ADD_INTERNAL_PORT % {
-            'br_name': self.instance.bridge.name,
+            'br_name': self.instance.bridge.get_name(),
             'port_name': 'peer_dhcp_%d' % (self.instance.pk)
         }
 
@@ -97,3 +122,4 @@ class DHCP(object):
     def __init__(self, instance, bash):
         self.instance = instance
         self._bash = bash
+        self.get_primary_nic()

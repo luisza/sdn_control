@@ -41,5 +41,6 @@ BASH_DHCP = BASH_CREATE_RUN_DIR + SUDO + "ip link add name %(iface)s type veth p
 BASH_KILL_PROGRAM = SUDO + "kill -9 ´cat %s´; "
 
 
-BASH_CREATE_CONTROLLER = '/etc/ryuctrl/service_creator.sh %(port)d %(ip)s "%(apps)s" %(wshost)s %(wsport)d'
-BASH_DELETE_CONTROLLER = '/etc/ryuctrl/service_delete.sh %(port)s'
+BASH_CREATE_CONTROLLER = SUDO + \
+    '/etc/ryuctrl/service_creator.sh %(port)d %(ip)s "%(apps)s" %(wshost)s %(wsport)d'
+BASH_DELETE_CONTROLLER = SUDO + '/etc/ryuctrl/service_delete.sh %(port)s'

@@ -59,40 +59,40 @@ class OVS(models.Model):
         return self.control_ip
 
 
-@python_2_unicode_compatible
-class NetworkBridge(models.Model):
-    ovs = models.ForeignKey(OVS)
+# @python_2_unicode_compatible
+# class NetworkBridge(models.Model):
+#     ovs = models.ForeignKey(OVS)
+#
+#     name = models.CharField(max_length=10)
+#     base_ip = models.GenericIPAddressField(null=True, blank=True)
+#     netmask = models.CharField(max_length=33, null=True, blank=True)
+#     broadcast = models.GenericIPAddressField(null=True, blank=True)
+#     admin_ifaces = models.CharField(
+#         max_length=256,
+#         help_text="Coma separated name ej ens160,ens192",
+#         null=True, blank=True
+#     )
+#     controller = models.ForeignKey(SDNController, null=True, blank=True)
+#
+#     def __str__(self):
+#         return "Bridge %s --> %s addr: %s netmask: %s broadcast: %s" % (
+#             self.ovs.control_ip,
+#             self.name,
+#             self.base_ip,
+#             self.netmask,
+#             self.broadcast
+#         )
 
-    name = models.CharField(max_length=10)
-    base_ip = models.GenericIPAddressField()
-    netmask = models.CharField(max_length=33)
-    broadcast = models.GenericIPAddressField()
-    admin_ifaces = models.CharField(
-        max_length=256,
-        help_text="Coma separated name ej ens160,ens192",
-        null=True, blank=True
-    )
-    controller = models.ForeignKey(SDNController, null=True, blank=True)
 
-    def __str__(self):
-        return "Bridge %s --> %s addr: %s netmask: %s broadcast: %s" % (
-            self.ovs.control_ip,
-            self.name,
-            self.base_ip,
-            self.netmask,
-            self.broadcast
-        )
-
-
-class BridgeLink(models.Model):
-    base = models.ForeignKey(
-        NetworkBridge,
-        related_name="base")
-
-    related_bridges = models.ManyToManyField(
-        NetworkBridge,
-        related_name="related_bridges"
-    )
+# class BridgeLink(models.Model):
+#     base = models.ForeignKey(
+#         NetworkBridge,
+#         related_name="base")
+#
+#     related_bridges = models.ManyToManyField(
+#         NetworkBridge,
+#         related_name="related_bridges"
+#     )
 
 
 @python_2_unicode_compatible
@@ -152,52 +152,19 @@ class NIC(models.Model, NICLogic):
         )
 
 
-@python_2_unicode_compatible
-class Logical_NIC(NIC, Logical_NIC_control):
-    bridge = models.ForeignKey(NetworkBridge)
-    is_dhcp = models.BooleanField(default=False)
-    key = models.SmallIntegerField(default=1)
-
-    def __str__(self):
-        return "Logical NIC %s addr: %s netmask %s broadcast %s" % (
-            self.interface,
-            self.address,
-            self.netmask,
-            self.broadcast
-        )
-
-    def get_iface_info(self):
-        return Logical_NIC_control.get_iface_info(self)
-
-
-@python_2_unicode_compatible
-class DHCP_Server(models.Model):
-    bridge = models.ForeignKey(NetworkBridge)
-
-    address = models.GenericIPAddressField(null=True, blank=True)
-
-    start_ip = models.GenericIPAddressField()
-    end_ip = models.GenericIPAddressField()
-    netmask = models.CharField(max_length=33, null=True, blank=True)
-    broadcast = models.GenericIPAddressField(null=True, blank=True)
-
-    # both netmask y broadcast
-    lease_time = models.CharField(max_length=10,
-                                  default="infinite")
-
-    def __str__(self):
-        return "%s,%s" % (
-            self.start_ip,
-            self.end_ip
-        )
-
-
-class DHCP_Static_IP(models.Model):
-    dhcp_server = models.ForeignKey(DHCP_Server)
-    mac = models.CharField(max_length=100)
-    address = models.GenericIPAddressField(null=True, blank=True)
-    hostname = models.CharField(max_length=33, null=True, blank=True)
-
-    lease_time = models.CharField(max_length=10,
-                                  default="infinite",
-                                  help_text="03m/infinite/ignore")
+# @python_2_unicode_compatible
+# class Logical_NIC(NIC, Logical_NIC_control):
+#     bridge = models.ForeignKey(NetworkBridge)
+#     is_dhcp = models.BooleanField(default=False)
+#     key = models.SmallIntegerField(default=1)
+#
+#     def __str__(self):
+#         return "Logical NIC %s addr: %s netmask %s broadcast %s" % (
+#             self.interface,
+#             self.address,
+#             self.netmask,
+#             self.broadcast
+#         )
+#
+#     def get_iface_info(self):
+#         return Logical_NIC_control.get_iface_info(self)

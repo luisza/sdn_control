@@ -166,7 +166,7 @@ function node_click_action(params) {
 		selected_nodes = [];
 	}
 	if (selected_nodes.length == 2) {
-		if (selected_nodes[0].id == selected_nodes[1].id) {
+		if (selected_nodes[0]  == selected_nodes[1]) {
 			selected_nodes.pop();
 		} else {
 			addEdge(selected_nodes[0], selected_nodes[1]);

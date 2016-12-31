@@ -8,7 +8,7 @@ Created on 4/12/2016
 '''
 from __future__ import unicode_literals
 from sdnctl.device.RYUController import RyuController
-from sdnctl.device.sshclient import SSHConnection
+from sdnctl.shell.sshclient import SSHConnection
 
 
 def ryu_action_up(modeladmin, request, queryset):

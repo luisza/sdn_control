@@ -13,15 +13,15 @@
 <script type="text/javascript">
 ADMIN_URLS = {
 	'router_change' : "{% url 'admin:network_builder_router_change' 0 %}?_to_field=id&_popup=1",
-	'host_change' : "{% url 'admin:sdnctl_host_change' 0 %}?_to_field=id&_popup=1",
-	'dhcp_change' : "{% url 'admin:sdnctl_dhcp_server_change' 0 %}?_to_field=id&_popup=1",
+	'host_change' : "{% url 'admin:network_builder_host_change' 0 %}?_to_field=id&_popup=1",
+	'dhcp_change' : "{% url 'admin:network_builder_dhcp_change' 0 %}?_to_field=id&_popup=1",
 	'firewall_change' : "{% url 'admin:network_builder_firewall_change' 0 %}?_to_field=id&_popup=1",
 	'edges_change': "{% url 'admin:network_builder_link_change' 0 %}?_to_field=id&_popup=1",
 
 
 	'router_add' : "{% url 'admin:network_builder_router_add' %}?_to_field=id&_popup=1",
-	'host_add' : "{% url 'admin:sdnctl_host_add' %}?_to_field=id&_popup=1",
-	'dhcp_add' : "{% url 'admin:sdnctl_dhcp_server_add' %}?_to_field=id&_popup=1",
+	'host_add' : "{% url 'admin:network_builder_host_add' %}?_to_field=id&_popup=1",
+	'dhcp_add' : "{% url 'admin:network_builder_dhcp_add' %}?_to_field=id&_popup=1",
 	'firewall_add' : "{% url 'admin:network_builder_firewall_add' %}?_to_field=id&_popup=1",
 	'edges_add' : "{% url 'admin:network_builder_link_add' %}?_to_field=id&_popup=1",
 

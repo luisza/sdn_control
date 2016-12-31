@@ -27,7 +27,7 @@ def network_run(request):
     net, _ = NetworkBuild.objects.get_or_create(name=request.POST.get('name'))
     net.text = request.POST.get('network')
     net.save()
-    build_network(json.loads(net.text), slugify(net.name))
+    build_network(json.loads(net.text), slugify(net.name), net)
 
     return HttpResponse("ok")
 
