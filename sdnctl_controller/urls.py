@@ -1,10 +1,10 @@
 from django.conf.urls import url
 
-from views import create_sdn_controller, delete_sdn_controller, restart_sdn_controller
-
+from . import views
 
 urlpatterns = [
-    url(r'^controller/create/(?P<pk>\d+)$', create_sdn_controller),
-    url(r'^controller/delete/(?P<pk>\d+)$', delete_sdn_controller),
-    url(r'^controller/restart/(?P<pk>\d+)$', restart_sdn_controller)
+    url(r'^register/dp$', views.register_datapath),
+    url(r'^controller/create/(?P<pk>\d+)$', views.create_sdn_controller),
+    url(r'^controller/delete/(?P<pk>\d+)$', views.delete_sdn_controller),
+    url(r'^controller/restart/(?P<pk>\d+)$', views.restart_sdn_controller)
 ]

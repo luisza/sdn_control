@@ -17,5 +17,5 @@ from django.conf.urls import url
 from views import create_bridges
 
 urlpatterns = [
-    url(r'^bridge/create/(?P<net>\d+)/(?P<ovs>\d+)$', create_bridges),
+    url(r'^bridge/create/(?P<net>\d+)/(?P<pk>\d+)$', create_bridges),
 ]

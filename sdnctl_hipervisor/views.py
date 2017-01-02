@@ -15,9 +15,9 @@ from sdnctl.device.Bridge import Bridge
 from sdnctl.shell.bashclient import BashClient
 
 
-def create_bridges(request, net, ovs):
+def create_bridges(request, net, pk):
     bridges = NetworkBridge.objects.filter(
-        network_instance__pk=net, ovs__pk=ovs)
+        network_instance__pk=net, pk=pk)
 
     shell = BashClient()
     cbridges = []

@@ -30,8 +30,8 @@ DJOBJS = {
 
 
 RYUAPPS = {
-    'router': ['ryu.app.rest_router'],
-    'firewall': ['ryu.app.rest_firewall']
+    'router': ['ryu.app.rest_router', 'ryu.controller.ofp_handler', 'ryu.app.dpinfo'],
+    'firewall': ['ryu.app.rest_firewall', 'ryu.controller.ofp_handler', 'ryu.app.dpinfo']
 }
 
 
@@ -126,6 +126,9 @@ def get_bridge(name, net, controller=None):
             controller=controller,
             network_instance=net
         )
+
+    # FIXME: quitar nb.get_name()
+    # nb.get_name()
     return nb
 
 
@@ -186,7 +189,7 @@ def build_tree_network(data, name, net):
         node = data['nodes'][i]
 
         if node['type'] in MAKE_BRIDGE:
-            bg_name = "%s_%s_%d" % (name, node['type'], node['id'])
+            bg_name = "n%d_%d" % (net.pk, data['nodes'][i]['obj'].pk)
             bridges[bg_name] = {
                 'ports': [],
                 'objs': [node],
@@ -216,8 +219,12 @@ def build_tree_network(data, name, net):
         to, _from = to[0], _from[0]  # just one possible
 
         if to['type'] in MAKE_BRIDGE and _from['type'] in MAKE_BRIDGE:
-            from_br = name + '_' + _from['type'] + '_' + str(_from['id'])
-            to_br = name + '_' + to['type'] + '_' + str(to['id'])
+            #from_br = name + '_' + _from['type'] + '_' + str(_from['id'])
+            #to_br = name + '_' + to['type'] + '_' + str(to['id'])
+
+            #bg_name = "n%d_%d" % (net.pk, data['nodes'][i]['obj'].pk)
+            from_br = "n%d_%d" % (net.pk, _from['obj'].pk)
+            to_br = "n%d_%d" % (net.pk, to['obj'].pk)
             bridges[from_br]['ports'].append({'from': from_br,
                                               'to': to_br,
                                               'type': 'internal',
@@ -228,17 +235,22 @@ def build_tree_network(data, name, net):
 
         else:
             if _from['type'] not in MAKE_BRIDGE and to['type'] in MAKE_BRIDGE:
-                bridge_name = name + '_' + to['type'] + '_' + str(to['id'])
+                #name + '_' + to['type'] + '_' + str(to['id'])
+                #bg_name = "n%d_%d" % (net.pk, data['nodes'][i]['obj'].pk)
+
+                bridge_name = "n%d_%d" % (net.pk, to['obj'].pk)
                 bridges[bridge_name]['objs'].append(_from)
                 update_object_link('from', _from, edge)
             elif _from['type'] in MAKE_BRIDGE and to['type'] not in MAKE_BRIDGE:
-                bridge_name = name + '_' + \
-                    _from['type'] + '_' + str(_from['id'])
+                # bridge_name = name + '_' + \
+                #    _from['type'] + '_' + str(_from['id'])
+
+                bridge_name = "n%d_%d" % (net.pk, _from['obj'].pk)
                 bridges[bridge_name]['objs'].append(to)
                 update_object_link('to', to, edge)
 
     pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(data_safe)
+    pp.pprint(bridges)
 
     return bridges, net, data_safe
 #     pp = pprint.PrettyPrinter(indent=4)
@@ -246,15 +258,12 @@ def build_tree_network(data, name, net):
 
 
 def process_tree_network(tree, net):
-    bridge_ovs = []
     for bridge in tree:
         orchestra.start_controller(net.pk, tree[bridge]['controller'])
-        pk = tree[bridge]['obj'].ovs
-        if not pk in bridge_ovs:
-            bridge_ovs.append(pk)
-
-    for ovs in bridge_ovs:
-        orchestra.create_bridges(net.pk, ovs)
+        obj = tree[bridge]['obj']
+        obj.get_name()
+        ovs = tree[bridge]['obj'].ovs
+        orchestra.create_bridges(net.pk, ovs, obj.pk)
 
 
 def build_network(data, name, net):

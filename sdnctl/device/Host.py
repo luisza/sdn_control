@@ -8,6 +8,14 @@ Created on 30/12/2016
 '''
 from __future__ import unicode_literals
 
+from django.db.models.query_utils import Q
+import libvirt
+import os
+
+from network_builder.models import Link
+from network_builder.utils import get_natural_name, get_random_mac
+
+
 BASE_XML = """
 <domain type='qemu'>
   <name>%(name)s</name>
@@ -98,30 +106,19 @@ BASE_XML = """
 """
 
 
-"""
-    <interface type='network'> 
-      <mac address='00:00:00:01:00:01'/> 
-      <source network='vcl_public'/> 
-      <target dev='hpub0'/> <model type='virtio'/> 
-      <alias name='hpub0'/> 
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
-    </interface> 
-    <interface type='network'> 
-      <mac address='00:00:00:02:00:01'/> 
-      <source network='vcl_private'/> 
-      <target dev='hpriv0'/> <model type='virtio'/> 
-      <alias name='hpriv0'/> 
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
-    </interface> 
-"""
+INTERFACE = """"<interface type='bridge'>
+      <mac address='%(address)s'/>
+      <source bridge='%(bridge)s'/>
+      <virtualport type='openvswitch'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='%(slot)s' function='0x0'/>
+    </interface>"""
 
-import libvirt
 
 try:
     from StringIO import StringIO as io
 except:
     from io import StringIO as io
-import os
 
 
 class Host(object):
@@ -197,7 +194,30 @@ class Host(object):
         vm.undefine()
 
     def get_network_interface(self):
-        return ''
+        dev = ""
+        naturalname = get_natural_name(self.instance)
+        links = Link.objects.filter(
+            Q(to_obj=self.instance.pk,
+              to_naturalname=naturalname
+              ) | Q(
+                from_obj=self.instance.pk,
+                from_naturalname=naturalname
+            )
+        )
+        slot = 10
+        for link in links:
+            dev += INTERFACE % {
+                "address": self.get_mac_address(link),
+                "bridge": self.instance.bridge.get_name(),
+                "slot": "0x%d" % (slot,)
+            }
+        return dev
+
+    def get_mac_address(self, link):
+        if link.mac:
+            return link.mac
+
+        return get_random_mac()
 
     def __init__(self, instance, shell):
         self.bash = shell

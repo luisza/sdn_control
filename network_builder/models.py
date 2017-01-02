@@ -22,9 +22,11 @@ class NetworkBridge(models.Model):
     network_instance = models.ForeignKey(NetworkBuild, null=True, blank=True)
 
     def get_name(self):
-
         if self.network_instance:
-            return "n%d_%d" % (self.network_instance.pk, self.pk)
+            name = "n%d_%d" % (self.network_instance.pk, self.pk)
+            if self.name != name:
+                self.name = name
+                self.save()
         return self.name
 
     def __str__(self):
@@ -54,6 +56,7 @@ class Router(models.Model):
     switch_id = models.CharField(max_length=20, null=True, blank=True)
     network_instance = models.ForeignKey(NetworkBuild, null=True, blank=True)
     bridge = models.ForeignKey(NetworkBridge, null=True, blank=True)
+    default_gateway = models.GenericIPAddressField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -94,8 +97,8 @@ class FirewallRule(models.Model):
                               help_text="xx:xx:xx:xx:xx:xx",
                               verbose_name="Destination MAC")
     dl_type = models.CharField(max_length=5,
-                               choices=(("ARP", "ARP"), ("Ipv4", "Ipv4")),
-                               default="Ipv4"
+                               choices=(("ARP", "ARP"), ("IPv4", "Ipv4")),
+                               default="IPv4"
                                )
     nw_src = models.CharField(max_length=50, null=True, blank=True,
                               help_text="xxx.xxx.xxx.xxx/xx",
