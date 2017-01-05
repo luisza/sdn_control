@@ -14,6 +14,7 @@ import os
 
 from network_builder.models import Link
 from network_builder.utils import get_natural_name, get_random_mac
+from sdnctl import settings
 
 
 BASE_XML = """
@@ -143,15 +144,12 @@ class Host(object):
 
     def get_connection(self):
         if not self.conn:
-            SASL_USER = 'usuario'
-            SASL_PASS = 'enrique'
-
             def request_cred(credentials, user_data):
                 for credential in credentials:
                     if credential[0] == libvirt.VIR_CRED_AUTHNAME:
-                        credential[4] = SASL_USER
+                        credential[4] = settings.SASL_USER
                     elif credential[0] == libvirt.VIR_CRED_PASSPHRASE:
-                        credential[4] = SASL_PASS
+                        credential[4] = settings.SASL_PASS
                 return 0
             auth = [
                 [libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE], request_cred, None]
@@ -211,6 +209,7 @@ class Host(object):
                 "bridge": self.instance.bridge.get_name(),
                 "slot": "0x%d" % (slot,)
             }
+            slot += 1
         return dev
 
     def get_mac_address(self, link):

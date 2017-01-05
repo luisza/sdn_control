@@ -7,7 +7,7 @@ Created on 4/12/2016
 @author: luisza
 '''
 from __future__ import unicode_literals
-from sdnctl.device.RYUController import RyuController
+from sdnctl.device.Controller import RyuController
 from sdnctl.shell.sshclient import SSHConnection
 
 

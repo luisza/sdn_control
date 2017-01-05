@@ -27,7 +27,8 @@ class Bridge(object):
         name = "n%d_%d" % (bridge.network_instance.pk, bridge.pk)
 
         if bridge:
-            self._bash.execute('sudo ovs-vsctl add-br %s' % (name,))
+            self._bash.execute(
+                'sudo ovs-vsctl --may-exist add-br %s' % (name,))
             self._bash.execute("sudo ovs-vsctl set-controller %s tcp:%s" % (
                 name,
                 bridge.controller.get_controller_ip()
@@ -47,7 +48,7 @@ class Bridge(object):
                     port_name = "n%d_%s_to_%s" % (net, bridge.pk, peer.pk)
                     peer_name = "n%d_%s_to_%s" % (net, peer.pk, bridge.pk)
 
-                    cmd = "sudo ovs-vsctl add-port %s %s " % (
+                    cmd = "sudo ovs-vsctl --may-exist add-port %s %s " % (
                         name, port_name)
                     cmd += "-- set interface %s type=patch options:peer=%s" % (
                         port_name, peer_name)
@@ -64,7 +65,7 @@ class Bridge(object):
             for peer in peers:
                 port_name = "n%d_%s_to_%s" % (net, bridge.pk, peer.base.pk)
                 peer_name = "n%d_%s_to_%s" % (net, peer.base.pk, bridge.pk)
-                cmd = "sudo ovs-vsctl add-port %s %s " % (
+                cmd = "sudo ovs-vsctl --may-exist add-port %s %s " % (
                     name, port_name)
                 cmd += "-- set interface %s type=patch options:peer=%s" % (
                     port_name, peer_name)

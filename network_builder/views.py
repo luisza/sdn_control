@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 from network_builder.models import NetworkBuild
-from network_builder.utils import build_network
+from sdnctl.NetworkBuilder import build_network
 
 
 # Create your views here.

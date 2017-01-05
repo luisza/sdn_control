@@ -25,6 +25,7 @@ class SDNController(models.Model):
     ip = models.GenericIPAddressField(default="0.0.0.0")
     port = models.SmallIntegerField(default=6633)
     apps = models.ManyToManyField(RyuApp)
+    apps_type = models.CharField(max_length=20, default="router")
 
     wsapi_host = models.GenericIPAddressField(default="0.0.0.0")
     wsapi_port = models.SmallIntegerField(default=8080)

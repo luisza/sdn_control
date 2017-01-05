@@ -13,8 +13,8 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 
 from network_builder.models import Firewall, Router
+from sdnctl.device.Controller import RyuController
 from sdnctl.device.Firewall import Firewall as CFirewall
-from sdnctl.device.RYUController import RyuController
 from sdnctl.device.Router import Router as CRouter
 from sdnctl.models import SDNController
 from sdnctl.shell.bashclient import BashClient as bashclient

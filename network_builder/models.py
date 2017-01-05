@@ -12,6 +12,8 @@ from sdnctl.models import OVS, SDNController
 class NetworkBuild(models.Model):
     name = models.CharField(max_length=250, default="mynetwork")
     text = models.TextField()
+    log = models.TextField(null=True, blank=True)
+    net_instance = models.BooleanField(default=False)
 
 
 @python_2_unicode_compatible
@@ -152,8 +154,15 @@ class Link(models.Model):
     to_naturalname = models.CharField(
         max_length=250, default="network_builder.Host")
 
+    network_instance = models.ForeignKey(NetworkBuild, null=True, blank=True)
+
     def __str__(self):
-        return "%s %s" % (self.address, str(self.is_dhcp))
+        f = "from %s(%d)" % (self.from_naturalname, self.from_obj)
+        t = "to %s(%d)" % (self.to_naturalname, self.to_obj)
+
+        return "%s %s %s %s" % (self.address,
+                                str(self.is_dhcp),
+                                f, t)
 
 
 @python_2_unicode_compatible
