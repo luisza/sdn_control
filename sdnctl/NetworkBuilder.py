@@ -93,7 +93,6 @@ def get_ovs():
 
 def get_bridge(name, net, controller=None):
     ovs = get_ovs()
-
     nb = NetworkBridge.objects.filter(name=name, network_instance=net).first()
     if nb is None:
         nb = NetworkBridge.objects.create(
@@ -203,7 +202,6 @@ def process_internal_edge(node, bridges, net, name, bridge):
 def process_edge(edges, name, bridge, objs, net):
     dev = []
     for node in edges:
-        print(node)
         if node['type'] == 'edge':
             if 'obj' not in node:
                 node['obj'] = create_django_link(node, net, bridge)

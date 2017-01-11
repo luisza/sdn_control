@@ -24,11 +24,11 @@ class NetworkBridge(models.Model):
     network_instance = models.ForeignKey(NetworkBuild, null=True, blank=True)
 
     def get_name(self):
-        if self.network_instance:
-            name = "n%d_%d" % (self.network_instance.pk, self.pk)
-            if self.name != name:
-                self.name = name
-                self.save()
+        #         if self.network_instance:
+        #             name = "n%d_%d" % (self.network_instance.pk, self.pk)
+        #             if self.name != name:
+        #                 self.name = name
+        #                 self.save()
         return self.name
 
     def __str__(self):
