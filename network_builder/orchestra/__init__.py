@@ -23,12 +23,11 @@ def stop_controller(net, controller):
                   controller.pk))
 
 
-def create_bridges(net, ovs, pk):
-    url = "%s//%s:%s/bridge/create/%d/%d" % (
+def create_bridges(net, ovs):
+    url = "%s//%s:%s/bridge/create/%d" % (
         HTTP_PROTOCOL,
         ovs.control_ip,
         OVS_PORT,
-        net,
-        pk
+        net
     )
     requests.get(url)

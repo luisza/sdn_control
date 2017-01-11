@@ -155,6 +155,7 @@ class Link(models.Model):
         max_length=250, default="network_builder.Host")
 
     network_instance = models.ForeignKey(NetworkBuild, null=True, blank=True)
+    bridge = models.ForeignKey(NetworkBridge, null=True, blank=True)
 
     def __str__(self):
         f = "from %s(%d)" % (self.from_naturalname, self.from_obj)
@@ -172,8 +173,10 @@ class DHCP(models.Model):
     lease_time = models.CharField(max_length=10,
                                   default="infinite")
 
+    default_dns = models.GenericIPAddressField(null=True, blank=True)
     network_instance = models.ForeignKey(NetworkBuild, null=True, blank=True)
     bridge = models.ForeignKey(NetworkBridge, null=True, blank=True)
+    switch_id = models.CharField(max_length=20, null=True, blank=True)
 
     def __str__(self):
         return "%s,%s" % (
@@ -187,6 +190,7 @@ class DHCP_Static_IP(models.Model):
     mac = models.CharField(max_length=100)
     address = models.GenericIPAddressField()
     hostname = models.CharField(max_length=33, null=True, blank=True)
+    default_dns = models.GenericIPAddressField(null=True, blank=True)
 
     lease_time = models.CharField(max_length=10,
                                   default="infinite",

@@ -206,7 +206,7 @@ class Host(object):
         for link in links:
             dev += INTERFACE % {
                 "address": self.get_mac_address(link),
-                "bridge": self.instance.bridge.get_name(),
+                "bridge": link.bridge.get_name(),
                 "slot": "0x%d" % (slot,)
             }
             slot += 1

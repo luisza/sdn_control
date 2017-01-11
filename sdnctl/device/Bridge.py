@@ -7,8 +7,7 @@ Created on 9/12/2016
 @author: luisza
 '''
 from __future__ import unicode_literals
-from network_builder.models import BridgeLink, DHCP as SDHCP, Host
-from sdnctl.device.DHCP import DHCP
+from network_builder.models import BridgeLink, Host
 from sdnctl.device.Host import Host as Dhost
 
 
@@ -70,13 +69,6 @@ class Bridge(object):
                 cmd += "-- set interface %s type=patch options:peer=%s" % (
                     port_name, peer_name)
                 self._bash.execute(cmd)
-
-    def create_dhcp(self):
-        servers = SDHCP.objects.filter(bridge=self.instance)
-
-        for server in servers:
-            dhcp = DHCP(server, self._bash)
-            dhcp.create_dhcp_server()
 
     def create_host(self):
         hosts = Host.objects.filter(bridge=self.instance)

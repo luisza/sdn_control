@@ -35,12 +35,17 @@ class Router:
 
     def set_ip_address(self):
         for addr in self.instance.routeraddress_set.all():
-            response = requests.post(self.url, data=json.dumps({
+            data = {
                 'address': addr.address
-            }))
+            }
+            print(self.url, json.dumps(data))
+            response = requests.post(self.url, data=json.dumps(data))
             print(response.text)
 
         if self.instance.default_gateway:
+            print(self.url, json.dumps({
+                'gateway': self.instance.default_gateway
+            }))
             response = requests.post(self.url, data=json.dumps({
                 'gateway': self.instance.default_gateway
             }))

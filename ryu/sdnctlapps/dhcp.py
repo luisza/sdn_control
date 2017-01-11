@@ -16,17 +16,22 @@
 
 # a simple ICMP Echo Responder
 
+
+import json
+
+from ryu.app.wsgi import ControllerBase, WSGIApplication, route
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
-from ryu.lib import addrconv
+from ryu.lib import addrconv, dpid as dpid_lib
 from ryu.lib.packet import dhcp
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ipv4
 from ryu.lib.packet import packet
 from ryu.lib.packet import udp
 from ryu.ofproto import ofproto_v1_3
+from webob import Response
 
 
 class DHCPResponder(app_manager.RyuApp):
@@ -54,11 +59,15 @@ class DHCPResponder(app_manager.RyuApp):
     """
 
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
+    _CONTEXTS = {'wsgi': WSGIApplication}
 
     def __init__(self, *args, **kwargs):
         super(DHCPResponder, self).__init__(*args, **kwargs)
         self.acks = {}
         self.switches = {}
+        wsgi = kwargs['wsgi']
+        wsgi.register(DHCPController,
+                      {'dhcp_server': self})
 
     def get_server_info(self, datapath):
         if datapath in self.switches:
@@ -66,31 +75,31 @@ class DHCPResponder(app_manager.RyuApp):
                 self.switches[datapath]['ipaddress'])
             netmask = addrconv.ipv4.text_to_bin(
                 self.switches[datapath]['netmask'])
-            address = self.switches[datapath]['address']
-            return ipaddress, netmask, address, self.switches[datapath]['ipaddress']
+            address = str(self.switches[datapath]['address'])
+            return ipaddress, netmask, address, str(self.switches[datapath]['ipaddress'])
         return None, None, None, None
 
     def get_host_info(self, datapath, hostaddress):
-        #print(datapath, hostaddress)
         ipaddress = hostname = dns = None
         if datapath in self.switches:
             if hostaddress in self.acks:
                 info = self.acks[hostaddress]
-                return info['ipaddress'], info['hostname'], info['dns']
+                return str(info['ipaddress']), str(info['hostname']), info['dns']
 
             if hostaddress in self.switches[datapath]['hosts']:
                 confhost = self.switches[datapath]['hosts'][hostaddress]
-                ipaddress = confhost['ipaddress']
-                hostname = confhost['hostname']
+                ipaddress = str(confhost['ipaddress'])
+                hostname = str(confhost['hostname'])
                 dns = addrconv.ipv4.text_to_bin(confhost['dns'])
             if not ipaddress and self.switches[datapath]['available_address']:
-                ipaddress = self.switches[datapath]['available_address'].pop()
+                ipaddress = str(
+                    self.switches[datapath]['available_address'].pop())
                 num = ipaddress.split('.')[-1]
-                hostname = "machine" + num
+                hostname = str("machine" + num)
                 dns = addrconv.ipv4.text_to_bin(self.switches[datapath]['dns'])
                 self.acks[hostaddress] = {
-                    'ipaddress': ipaddress,
-                    'hostname': hostname,
+                    'ipaddress': str(ipaddress),
+                    'hostname': str(hostname),
                     'dns': dns
                 }
         return ipaddress, hostname, dns
@@ -102,14 +111,25 @@ class DHCPResponder(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
         actions = [parser.OFPActionOutput(port=ofproto.OFPP_CONTROLLER,
-                                          max_len=ofproto.OFPCML_NO_BUFFER)]
+                                          max_len=ofproto.OFPCML_NO_BUFFER
+                                          )]
         inst = [parser.OFPInstructionActions(type_=ofproto.OFPIT_APPLY_ACTIONS,
                                              actions=actions)]
-        mod = parser.OFPFlowMod(datapath=datapath,
-                                priority=0,
-                                match=parser.OFPMatch(),
-                                instructions=inst)
-        datapath.send_msg(mod)
+        mod67 = parser.OFPFlowMod(datapath=datapath,
+                                  priority=32760,
+                                  match=parser.OFPMatch(
+                                      eth_type=0x0800, ip_proto=17, udp_dst=67),
+                                  instructions=inst)
+        mod68 = parser.OFPFlowMod(datapath=datapath,
+                                  priority=32760,
+                                  match=parser.OFPMatch(
+                                      eth_type=0x0800, ip_proto=17, udp_dst=68),
+                                  instructions=inst)
+
+        req = parser.OFPSetConfig(datapath, ofproto.OFPC_FRAG_NORMAL, 1500)
+        datapath.send_msg(req)
+        datapath.send_msg(mod67)
+        datapath.send_msg(mod68)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
@@ -119,7 +139,8 @@ class DHCPResponder(app_manager.RyuApp):
         pkt = packet.Packet(data=msg.data)
         pkt_dhcp = pkt.get_protocols(dhcp.dhcp)
         if pkt_dhcp:
-            self._handle_dhcp(datapath, port, pkt)
+            if datapath.id in self.switches:
+                self._handle_dhcp(datapath, port, pkt)
 
     def assemble_ack(self, pkt, datapath):
         req_eth = pkt.get_protocol(ethernet.ethernet)
@@ -129,6 +150,7 @@ class DHCPResponder(app_manager.RyuApp):
         ipaddress, netmask, address, dhcpip = self.get_server_info(datapath)
         hostipaddress, hostname, dns = self.get_host_info(datapath,
                                                           req_eth.src)
+
         if ipaddress:
             req.options.option_list.remove(
                 next(opt for opt in req.options.option_list if opt.tag == 53))
@@ -161,6 +183,7 @@ class DHCPResponder(app_manager.RyuApp):
         ipaddress, netmask, address, dhcpip = self.get_server_info(datapath)
         hostipaddress, hostname, dns = self.get_host_info(
             datapath, disc_eth.src)
+
         if ipaddress:
             disc.options.option_list.remove(
                 next(opt for opt in disc.options.option_list if opt.tag == 55))
@@ -180,7 +203,6 @@ class DHCPResponder(app_manager.RyuApp):
                 0, dhcp.option(tag=53, value='02'.decode('hex')))
             disc.options.option_list.insert(
                 0, dhcp.option(tag=54, value=ipaddress))
-
             offer_pkt = packet.Packet()
             offer_pkt.add_protocol(ethernet.ethernet(
                 ethertype=disc_eth.ethertype, dst=disc_eth.src, src=address))
@@ -193,6 +215,7 @@ class DHCPResponder(app_manager.RyuApp):
                                              yiaddr=hostipaddress,
                                              xid=disc.xid,
                                              options=disc.options))
+
             self.logger.info("ASSEMBLED OFFER: %s --> %s" %
                              (disc_eth.src, hostipaddress))
         return offer_pkt
@@ -216,12 +239,13 @@ class DHCPResponder(app_manager.RyuApp):
         dhcp_state = self.get_state(pkt_dhcp)
         self.logger.info("NEW DHCP %s PACKET RECEIVED: %s" %
                          (dhcp_state, pkt_dhcp.chaddr))
+
         if dhcp_state == 'DHCPDISCOVER':
-            discover = self.assemble_offer(pkt, str(datapath.id))
+            discover = self.assemble_offer(pkt, datapath.id)
             if discover:
                 self._send_packet(datapath, port, discover)
         elif dhcp_state == 'DHCPREQUEST':
-            ack = self.assemble_ack(pkt, str(datapath.id))
+            ack = self.assemble_ack(pkt, datapath.id)
             if ack:
                 self._send_packet(datapath, port, ack)
 
@@ -238,3 +262,100 @@ class DHCPResponder(app_manager.RyuApp):
                                   actions=actions,
                                   data=data)
         datapath.send_msg(out)
+
+
+class DHCPController(ControllerBase):
+
+    def __init__(self, req, link, data, **config):
+        super(DHCPController, self).__init__(req, link, data, **config)
+        self.dhcp_server = data['dhcp_server']
+
+    @route('dhcp', '/dhcp/all', methods=['GET'])
+    def get_dhcp_info(self, req, **kwargs):
+        body = json.dumps(self.dhcp_server.switches)
+        return Response(content_type='application/json', body=body)
+
+    @route('dhcp', '/dhcp/{dpid}', methods=['GET'],
+           requirements={'dpid': dpid_lib.DPID_PATTERN})
+    def get_dhcp_switch_info(self, req, **kwargs):
+        dpid = dpid_lib.str_to_dpid(kwargs['dpid'])
+        if dpid not in self.dhcp_server.switches:
+            return Response(status=404)
+
+        body = json.dumps(self.dhcp_server.switches[dpid])
+        return Response(content_type='application/json', body=body)
+
+    @route('dhcp', '/dhcp/add/{dpid}', methods=['PUT'],
+           requirements={'dpid': dpid_lib.DPID_PATTERN})
+    def insert_dhcp_netinformation(self, req, **kwargs):
+        dpid = dpid_lib.str_to_dpid(kwargs['dpid'])
+        try:
+            new_entry = req.json if req.body else {}
+        except ValueError:
+            return Response(status=400)
+        if new_entry:
+            dns = '8.8.8.8'
+            for field in ["ipaddress", "netmask", "address"]:
+                if field not in new_entry:
+                    return Response(status=400)
+
+            if 'dns' in new_entry:
+                dns = new_entry['dns']
+
+            available_address = []
+            if 'startip' in new_entry and 'endip' in new_entry:
+                startip = int(new_entry['startip'].split('.')[-1])
+                endip = int(new_entry['endip'].split('.')[-1])
+                base = ".".join(new_entry['startip'].split('.')[:-1])
+                if startip >= endip:
+                    return Response(status=400)
+                for i in range(startip, endip + 1):
+                    available_address.append(base + "." + "%02.0f" % (i))
+
+            if dpid not in self.dhcp_server.switches:
+                self.dhcp_server.switches[dpid] = {
+                    "available_address": available_address,
+                    "hosts": {}
+                }
+
+            self.dhcp_server.switches[dpid][
+                'ipaddress'] = new_entry['ipaddress']
+            self.dhcp_server.switches[dpid]['netmask'] = new_entry['netmask']
+            self.dhcp_server.switches[dpid]['address'] = new_entry['address']
+            self.dhcp_server.switches[dpid]['dns'] = dns
+            body = json.dumps(self.dhcp_server.switches[dpid])
+            return Response(content_type='application/json', body=body)
+        return Response(status=404)
+
+    @route('dhcp', '/dhcp/host/{dpid}', methods=['PUT'],
+           requirements={'dpid': dpid_lib.DPID_PATTERN})
+    def insert_dhcp_hostinformation(self, req, **kwargs):
+        dpid = dpid_lib.str_to_dpid(kwargs['dpid'])
+        
+        if dpid in self.dhcp_server.switches:
+            try:
+                new_entry = req.json if req.body else {}
+            except ValueError:
+                return Response(status=400)
+            if new_entry:
+                dns = self.dhcp_server.switches[dpid]['dns']
+                for field in ["ipaddress", 'hostname', "address"]:
+                    if field not in new_entry:
+                        return Response(status=400)
+
+                if 'dns' in new_entry:
+                    dns = new_entry['dns']
+
+                if new_entry["address"] not in self.dhcp_server.switches[dpid]['hosts']:
+                    self.dhcp_server.switches[dpid][
+                        'hosts'][new_entry["address"]] = {'dns': dns}
+
+                self.dhcp_server.switches[dpid]['hosts'][
+                    "ipaddress"] = new_entry['ipaddress']
+
+                self.dhcp_server.switches[dpid][
+                    'hosts']['hostname'] = new_entry['hostname']
+
+                body = json.dumps(self.dhcp_server.switches[dpid])
+                return Response(content_type='application/json', body=body)
+        return Response(status=404)

@@ -10,6 +10,7 @@ from __future__ import unicode_literals
 
 import copy
 import json
+import pprint
 
 from network_builder import orchestra
 from network_builder.models import Link, NetworkBridge, BridgeLink, Host,\
@@ -62,8 +63,10 @@ def get_controller(name, apps, _type):
     return control_obj
 
 
-def create_django_link(edge, net):
-    link = Link.objects.create(is_dhcp=True, network_instance=net)
+def create_django_link(edge, net, bridge):
+    link = Link.objects.create(is_dhcp=True,
+                               bridge=bridge,
+                               network_instance=net)
     return link
 
 
@@ -119,7 +122,7 @@ def connect_bridge(_from, to, bridges, net):
     return blink
 
 
-def update_object_link(_type, node, link, net):
+def update_object_link(_type, node, link, net, bridge):
     obj = link['obj']
     if 'from' == _type:
         obj.from_obj = node['obj'].pk
@@ -128,15 +131,22 @@ def update_object_link(_type, node, link, net):
         obj.to_obj = node['obj'].pk
         obj.to_naturalname = get_natural_name(node['obj'])
     obj.network_instance = net
+    obj.bridge = bridge
     obj.save()
+
+
+def get_machine_imagen():
+    image = MachineImage.objects.first()
+    if not image:
+        image = MachineImage.objects.create()
+    return image
 
 
 def create_djobject_from_node(node, net):
     device = None
-    print(node)
     if node['type'] == 'host':
         device = Host.objects.create(network_instance=net,
-                                     image=MachineImage.objects.create())
+                                     image=get_machine_imagen())
 
     return device
 
@@ -193,18 +203,22 @@ def process_internal_edge(node, bridges, net, name, bridge):
 def process_edge(edges, name, bridge, objs, net):
     dev = []
     for node in edges:
+        print(node)
         if node['type'] == 'edge':
             if 'obj' not in node:
-                node['obj'] = create_django_link(node, net)
+                node['obj'] = create_django_link(node, net, bridge)
                 node['djvalue'] = node['obj'].pk
 
             if node['from'] == name:  # node is from
-                to = list(filter(lambda x: x['id'] == node['to'], objs))[0]
-                update_object_link('to', to, node, net)
+                to = list(filter(lambda x: x['id'] == node['to'], objs))
+                if to:
+
+                    update_object_link('to', to[0], node, net, bridge)
             else:  # node is to
                 _from = list(
-                    filter(lambda x: x['id'] == node['from'], objs))[0]
-                update_object_link('from', _from, node, net)
+                    filter(lambda x: x['id'] == node['from'], objs))
+                if _from:
+                    update_object_link('from', _from[0], node, net, bridge)
 
             dev.append(node)
     return dev
@@ -283,16 +297,23 @@ def build_tree_network(data, name, net):
 
 
 def process_tree_network(tree, net):
+    ovss = []
     for bridge in tree:
         orchestra.start_controller(net.pk,
                                    tree[bridge]['obj'].controller)
         obj = tree[bridge]['obj']
         obj.get_name()
         ovs = tree[bridge]['obj'].ovs
-        orchestra.create_bridges(net.pk, ovs, obj.pk)
+        if not ovs in ovss:
+            ovss.append(ovs)
+    for ovs in ovss:
+        orchestra.create_bridges(net.pk, ovs)
 
 
 def build_network(data, name, net):
+    #     pp = pprint.PrettyPrinter(indent=2)
+    #     pp.pprint(data)
+    #     print("\n" * 6)
     tree, net, data = build_tree_network(data, name, net)
     net.text = json.dumps(data)
     net.save()

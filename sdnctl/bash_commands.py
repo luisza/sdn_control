@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 
 SUDO = "sudo "
 BASH_ADD_BRIDGE = SUDO + "ovs-vsctl --may-exist add-br %(name)s; " + SUDO + "\
-ip link set %(name)s up multicast on mtu 1420; " + SUDO + "\
+ip link set %(name)s up multicast on mtu 1500; " + SUDO + "\
 ovs-vsctl set-controller %(name)s tcp:%(controller_url)s; "
 BASH_DEL_BRIDGE = SUDO + "ovs-vsctl del-br %s; "
 BASH_DEL_PORT = SUDO + "ovs-vsctl del-port  %(br_name)s %(port_name)s; "
@@ -26,7 +26,8 @@ BASH_SET_IP = SUDO + \
     "ip addr add %(cidr)s broadcast %(broadcast)s dev %(iface)s; "
 BASH_DEL_LINK = SUDO + "ip link del %s; "
 BASH_HOST_FILE_PATH = "/var/run/sdndhcp/hostfile_%d.conf"
-BASH_CREATE_RUN_DIR = SUDO + "mkdir -p /var/run/sdndhcp || true; "
+BASH_CREATE_RUN_DIR = SUDO + "mkdir -p /var/run/sdndhcp && " + \
+    SUDO + "chmod 757 /var/run/sdndhcp/ || true; "
 BASH_CREATE_HOSTFILE = SUDO + 'echo "%s" %s /var/run/sdndhcp/hostfile_%d.conf;'
 
 DHCP_PID = "/var/run/sdndhcp/hostfile_%d.pid"

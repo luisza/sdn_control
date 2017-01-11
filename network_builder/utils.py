@@ -19,14 +19,15 @@ DJOBJS = {
     'host': Host,
     'firewall': Firewall,
     'dhcp': DHCP,
-    'edges': Link,
+    'edge': Link,
     'internaledge': BridgeLink
 }
 
 
 RYUAPPS = {
-    'router': ['ryu.app.rest_router', 'ryu.controller.ofp_handler', 'ryu.app.dpinfo'],
-    'firewall': ['ryu.app.rest_firewall', 'ryu.controller.ofp_handler', 'ryu.app.dpinfo']
+    'router': ['ryu.app.rest_router', 'ryu.controller.ofp_handler', "sdnctlapps.dhcp", 'sdnctlapps.dpinfo'],
+    'firewall': ['ryu.app.rest_firewall', 'ryu.controller.ofp_handler', 'sdnctlapps.dpinfo']
+
 }
 
 
