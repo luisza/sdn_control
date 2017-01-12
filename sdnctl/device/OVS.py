@@ -7,10 +7,9 @@ Free as freedom will be 15/8/2016
 '''
 
 from __future__ import unicode_literals
-from sdnctl.device.sshclient import SSHConnection
 
 import re
-from sdnctl.models import BridgeLink
+
 from sdnctl.bash_commands import (
     BASH_ADD_BRIDGE,
     BASH_DEL_BRIDGE,
@@ -20,6 +19,8 @@ from sdnctl.bash_commands import (
     BASH_ADD_INTERNAL_PORT,
     BASH_SET_IP)
 from sdnctl.device.CIDR import get_net_size
+from sdnctl.shell.sshclient import SSHConnection
+#from sdnctl.models import BridgeLink
 
 
 class OVSManager(object):
@@ -55,9 +56,11 @@ class OVSManager(object):
         if self.instance.ignore_bridge:
             exclude = self.instance.ignore_bridge.split(",")
         for bridge in self.instance.networkbridge_set.all():
+            ctr_ip = bridge.controller.get_controller_ip(
+            ) if bridge.controller else "127.0.0.1:6633"
             bash_cmd += BASH_ADD_BRIDGE % (
                 {'name': bridge.name,
-                 'controller_url': self.instance.controller_url})
+                 'controller_url': ctr_ip})
             if bridge.admin_ifaces:
                 for index, port_name in enumerate(
                         bridge.admin_ifaces.split(",")):
@@ -98,30 +101,30 @@ class OVSManager(object):
         self._bash.execute(bash_cmd)
 
     def add_internal_port_connections(self):
-        bash_cmd = ""
-        for bridge in self.instance.networkbridge_set.all():
-            for bridgelink in BridgeLink.objects.filter(base=bridge):
-                name = bridgelink.base.name
-                for br_ext in bridgelink.related_bridges.all():
-                    external_ip = br_ext.ovs.control_ip
-                    br_name = "gre_%s_%s_%d" % (name,
-                                                br_ext.name,
-                                                bridgelink.pk)
-                    bash_cmd += BASH_ADD_OVS_PORT % {
-                        'name': name,
-                        'br_name': br_name,
-                        'remote_ip': external_ip
-                    }
-            for bridgelink in BridgeLink.objects.filter(
-                    related_bridges=bridge):
-                name = bridgelink.base.name
-                br_name = "gre_%s_%s_%d" % (name,
-                                            bridge.name,
-                                            bridgelink.pk)
-                bash_cmd += BASH_ADD_OVS_PORT % {
-                    'name': name,
-                    'br_name': br_name,
-                    'remote_ip': bridgelink.base.ovs.control_ip
-                }
-
-        self._bash.execute(bash_cmd)
+        pass
+#        bash_cmd = ""
+#        for bridge in self.instance.networkbridge_set.all():
+#             for bridgelink in BridgeLink.objects.filter(base=bridge):
+#                 name = bridgelink.base.name
+#                 for br_ext in bridgelink.related_bridges.all():
+#                     external_ip = br_ext.ovs.control_ip
+#                     br_name = "gre_%s_%s_%d" % (name,
+#                                                 br_ext.name,
+#                                                 bridgelink.pk)
+#                     bash_cmd += BASH_ADD_OVS_PORT % {
+#                         'name': name,
+#                         'br_name': br_name,
+#                         'remote_ip': external_ip
+#                     }
+#             for bridgelink in BridgeLink.objects.filter(
+#                     related_bridges=bridge):
+#                 name = bridgelink.base.name
+#                 br_name = "gre_%s_%s_%d" % (name,
+#                                             bridge.name,
+#                                             bridgelink.pk)
+#                 bash_cmd += BASH_ADD_OVS_PORT % {
+#                     'name': name,
+#                     'br_name': br_name,
+#                     'remote_ip': bridgelink.base.ovs.control_ip
+#                 }
+#        self._bash.execute(bash_cmd)

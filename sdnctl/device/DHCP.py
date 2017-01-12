@@ -1,99 +1,95 @@
 # encoding: utf-8
 
+
 '''
-Free as freedom will be 21/8/2016
+Created on 11/1/2017
 
 @author: luisza
 '''
-
 from __future__ import unicode_literals
-from sdnctl.models import DHCP_Static_IP
-from sdnctl.bash_commands import BASH_CREATE_HOSTFILE, BASH_HOST_FILE_PATH,\
-    BASH_DHCP, BASH_ADD_INTERNAL_PORT, BASH_DEL_PORT, DHCP_PID,\
-    BASH_KILL_PROGRAM, BASH_DEL_LINK, BASH_CREATE_RUN_DIR
+
+from django.db.models.query_utils import Q
+import json
+
+from network_builder.models import Link
+from network_builder.utils import get_natural_name
+import requests
 
 
-class DHCP(object):
+class DHCP:
 
-    def create_host_file(self):
-        self._bash.execute(BASH_CREATE_RUN_DIR)
-        static_ips = DHCP_Static_IP.objects.filter(
-            dhcp_server=self.instance)
-        txt_ips = ""
-        for index, static_ip in enumerate(static_ips):
-            line = static_ip.mac
-            if static_ip.address:
-                line += "," + static_ip.address
-            if static_ip.hostname:
-                line += "," + static_ip.hostname
-            line += "," + static_ip.lease_time
-            aling = ">>" if index else ">"
-            txt_ips += BASH_CREATE_HOSTFILE % (
-                line, aling,
-                self.instance.pk
-            )
-        if txt_ips:
-            self._bash.execute(txt_ips)
-            return " --dhcp-hostsfile=" + BASH_HOST_FILE_PATH % (
-                self.instance.pk)
+    def __init__(self, instance, bridge):
+        self.instance = instance
+        self.controller = instance.bridge.controller
+        self.bridge = bridge
 
-        return ""
+    def setup(self):
+        self.create_dhcp_server()
+        self.add_static_host()
 
-    def get_ip_address(self):
-        address = ""
-        if self.instance.address:
-            address = self.instance.address
-        else:
-            octet = list(self.instance.start_ip.split("."))
-            octet[-1] = "1"
-            address = ".".join(octet)
-        return address
+    def get_primary_nic(self):
+        naturalname = get_natural_name(self.instance)
+        links = Link.objects.filter(
+            Q(to_obj=self.instance.pk,
+              to_naturalname=naturalname
+              ) | Q(
+                from_obj=self.instance.pk,
+                from_naturalname=naturalname
+            ),
+            bridge=self.bridge
+        )
+        # FIXME: bridge in link
+        address = netmask = mac = None
+        dhcp = False
+
+        priNIC = links.filter(is_dhcp=False).first()
+        if not priNIC:
+            priNIC = links.first()
+            dhcp = True
+        if priNIC:
+            address = priNIC.address
+
+        if not dhcp:
+            netmask = priNIC.netmask
+            mac = priNIC.mac
+            #broadcast = priNIC.broadcast
+
+        return address, netmask, mac
 
     def create_dhcp_server(self):
-        host_file = self.create_host_file()
-        dhcp_range = "%s,%s" % (
-            self.instance.start_ip, self.instance.end_ip
+
+        url = "http://%s:%d/dhcp/add/%s" % (
+            self.controller.wsapi_host,
+            self.controller.wsapi_port,
+            self.instance.switch_id
         )
-        if self.instance.broadcast and self.instance.netmask:
-            dhcp_range += ',%s,%s' % (
-                self.instance.netmask,
-                self.instance.broadcast
-            )
+        ip, netmask, addr = self.get_primary_nic()
+        if ip:
+            params = {
+                'ipaddress': ip,
+                'netmask': netmask,
+                'address': addr,
+                'dns': self.instance.default_dns or '8.8.8.8',
+                'startip': self.instance.start_ip,
+                'endip': self.instance.end_ip
+            }
+            print(url, json.dumps(params))
+            response = requests.put(url, data=json.dumps(params))
+            print(response.text)
 
-        dhcp_range += "," + self.instance.lease_time
+    def add_static_host(self):
+        url = "http://%s:%d/dhcp/host/%s" % (
+            self.controller.wsapi_host,
+            self.controller.wsapi_port,
+            self.instance.switch_id
+        )
 
-        bash_cmd = BASH_DHCP % {
-            'iface': 'dhcp_%d' % self.instance.pk,
-            'pid': DHCP_PID % self.instance.pk,
-            'dhcp_range': dhcp_range,
-            'host_file': host_file,
-            'address': self.get_ip_address(),
-            'netmask': 'netmask ' + self.instance.netmask
-            if self.instance.netmask else "",
-            'broadcast': 'broadcast ' + self.instance.broadcast
-            if self.instance.broadcast else ""
-        }
-
-        bash_cmd += BASH_ADD_INTERNAL_PORT % {
-            'br_name': self.instance.bridge.name,
-            'port_name': 'peer_dhcp_%d' % (self.instance.pk)
-        }
-
-        self._bash.execute(bash_cmd)
-
-    def del_dhcp_server(self, allow_error=False):
-
-        pid = DHCP_PID % self.instance.pk
-        bash_cmd = BASH_KILL_PROGRAM % pid
-
-        bash_cmd += BASH_DEL_PORT % {
-            'br_name': self.instance.bridge.name,
-            'port_name': 'peer_dhcp_%d' % (self.instance.pk)
-        }
-        vnetname = 'dhcp_%d' % (self.instance.pk)
-        bash_cmd += BASH_DEL_LINK % vnetname
-        self._bash.execute(bash_cmd, allow_error=allow_error)
-
-    def __init__(self, instance, bash):
-        self.instance = instance
-        self._bash = bash
+        for staticaddr in self.instance.dhcp_static_ip_set.all():
+            params = {'address': staticaddr.mac,
+                      'hostname': staticaddr.hostname,
+                      'dns': staticaddr.default_dns or '8.8.8.8',
+                      'ipaddress': staticaddr.address
+                      }
+            print(url, json.dumps(params))
+            response = requests.put(url, data=json.dumps(params))
+            print(response.text)

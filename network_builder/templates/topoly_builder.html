@@ -1,0 +1,91 @@
+{% load static %}
+<html>
+<head>
+
+<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+<script src="{% static 'js/jquery-1.10.2.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>	
+<script type="text/javascript" src="{% static 'js/vis.js' %}"></script>
+<link href="{% static 'css/vis-network.min.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'css/network_builder.css' %}" rel="stylesheet" type="text/css"/>
+
+
+<script type="text/javascript">
+ADMIN_URLS = {
+	'router_change' : "{% url 'admin:network_builder_router_change' 0 %}?_to_field=id&_popup=1",
+	'host_change' : "{% url 'admin:network_builder_host_change' 0 %}?_to_field=id&_popup=1",
+	'dhcp_change' : "{% url 'admin:network_builder_dhcp_change' 0 %}?_to_field=id&_popup=1",
+	'firewall_change' : "{% url 'admin:network_builder_firewall_change' 0 %}?_to_field=id&_popup=1",
+	'edges_change': "{% url 'admin:network_builder_link_change' 0 %}?_to_field=id&_popup=1",
+
+
+	'router_add' : "{% url 'admin:network_builder_router_add' %}?_to_field=id&_popup=1",
+	'host_add' : "{% url 'admin:network_builder_host_add' %}?_to_field=id&_popup=1",
+	'dhcp_add' : "{% url 'admin:network_builder_dhcp_add' %}?_to_field=id&_popup=1",
+	'firewall_add' : "{% url 'admin:network_builder_firewall_add' %}?_to_field=id&_popup=1",
+	'edges_add' : "{% url 'admin:network_builder_link_add' %}?_to_field=id&_popup=1",
+
+};
+
+DIR = '{% static '/img/' %}';
+SAVE_URL = '{% url "network_save" %}';
+LOAD_NETWORK_URL = '{% url "network_load" %}';
+RUN_URL='{% url "network_run" %}'
+</script>
+
+
+<script src="{% static 'js/network_builder.js' %}"></script>	
+
+</head>
+<body onload="draw();">
+
+
+{% if available_networks %}
+	<label for="network_choice" > Choose one network to load:</label>
+	<select style="min-width: 200px;" name="network_choice" id="network_choice">
+		{% for network in available_networks %}
+		<option value="{{netwotk.name}}"> {{network.name}} </option>
+		{% endfor %}
+	
+	</select> 
+	<button class="btn btn-sm btn-success"  onclick="network_load()"> 
+		<span id="loadnw"></span> Load network </button>
+		
+    <button class="btn btn-sm btn-success"  onclick="network_run()"> 
+		<span id="runnw"></span> Run network </button>
+{% endif %}
+
+
+
+<hr>
+<div id="workarea">
+	<div id="network" ></div>
+	
+	<div id="action_buttons">
+		<h2> Save </h2>
+			<label for="network_name" > Network name:</label>
+			<input type="text" name="network_name" id="network_name"> <br><br>
+			<button class="btn btn-success btn-sm"  onclick="network_save()"> <span id="load"></span>Save Network</button> 
+		<hr>
+			<a onclick="addNode('router')"> <img width="64px" height="64px" src="{%static 'img/router.png' %}"  alt="router"/> </a>
+			<a onclick="addNode('host')"> <img  width="64px" height="64px"  src="{%static 'img/host.png' %}"  alt="host"/> </a>
+			<a onclick="addNode('dhcp')"> <img  width="64px" height="64px"  src="{%static 'img/dhcp.png' %}"  alt="dhcp"/> </a>           
+			<a onclick="addNode('dns')"> <img  width="64px" height="64px"  src="{%static 'img/dns.png' %}"  alt="dns"/> </a>   
+			<a onclick="addNode('nat')"> <img  width="64px" height="64px"  src="{%static 'img/nat.png' %}"  alt="nat" /> </a>           
+			<a onclick="addNode('firewall')"> <img  width="64px" height="64px"  src="{%static 'img/firewall.png' %}"  alt="firewall"/> </a>           
+			<a onclick="addNode('vpn')"> <img  width="64px" height="64px"  src="{%static 'img/vpn.png' %}"  alt="vpn"/> </a>           
+			<hr>
+			<h2> Remove </h2>
+			<div class="btn-group" role="group" aria-label="...">
+			<button class="btn btn-warning btn-sm" onclick="removeEdge()"> Edge</button>
+			<button class="btn btn-default btn-sm"  type="button"> ---  </button>
+			<button class="btn btn-danger btn-sm"  onclick="removeNode()"> Node</button>
+			</div>
+			<button class="btn btn-info btn-sm"  onclick="network_reset()"> Reset </button>
+			
+
+	</div>
+</div>
+
+</body>
+</html>

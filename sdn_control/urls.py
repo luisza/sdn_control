@@ -15,9 +15,11 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
+
+from network_builder import urls as nb_urls
 from sdnctl.views import get_host_info
 
 urlpatterns = [
     url(r'host/info$', get_host_info),
     url(r'^admin/', admin.site.urls),
-]
+] + nb_urls.urlpatterns

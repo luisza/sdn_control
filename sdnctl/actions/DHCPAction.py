@@ -7,7 +7,7 @@ Free as freedom will be 21/8/2016
 '''
 
 from __future__ import unicode_literals
-from sdnctl.device.sshclient import SSHConnection
+from sdnctl.shell.sshclient import SSHConnection
 from sdnctl.device.DHCP import DHCP
 
 

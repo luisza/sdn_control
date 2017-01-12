@@ -1,0 +1,10 @@
+#network{
+	width: 85%;
+	display: inline-block;
+	background-color: #fbfbfb;
+}
+#action_buttons{
+	width: 14%;
+	display: inline-block;
+	vertical-align: top;
+}

@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'sdnctl'
+    'sdnctl',
+    'network_builder'
 ]
 
 MIDDLEWARE = [
@@ -76,8 +77,16 @@ WSGI_APPLICATION = 'sdn_control.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql', 
+        'NAME': 'sdnctl',
+        'USER': 'sdnctl',
+        'PASSWORD': '$#sasaerES873',
+        'HOST': 'sdnctl.db',   # Or an IP Address that your DB is hosted on
+        'PORT': '3306',
+        'OPTIONS': {
+           'init_command': 'SET default_storage_engine=INNODB',
+        }
+
     }
 }
 

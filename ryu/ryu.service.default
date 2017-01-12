@@ -4,7 +4,7 @@ After=syslog.target network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/ryu-manager  --log-file=/var/log/ryu.log --app-lists APPS
+ExecStart=RYU --ofp-listen-host IP --ofp-tcp-listen-port PORT --log-file=/var/log/ryu_IP_PORT.log --observe-links --app-lists APPS EXTRAS 
 
 [Install]
 WantedBy=multi-user.target
