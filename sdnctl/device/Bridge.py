@@ -18,12 +18,13 @@ class Bridge(object):
         self._bash = bash
 
     def delete_bridge(self):
-        name = "n%d_%d" % (self.instance.network_instance.pk, self.instance.pk)
+        # "n%d_%d" % (self.instance.network_instance.pk, self.instance.pk)
+        name = self.instance.name
         self._bash.execute('sudo ovs-vsctl del-br %s' % (name,))
 
     def create_bridge(self):
         bridge = self.instance
-        name = "n%d_%d" % (bridge.network_instance.pk, bridge.pk)
+        name = bridge.name  # n%d_%d" % (bridge.network_instance.pk, bridge.pk)
 
         if bridge:
             self._bash.execute(
@@ -37,7 +38,7 @@ class Bridge(object):
     def create_internal_ports(self):
         bridge = self.instance
         net = bridge.network_instance.pk
-        name = "n%d_%d" % (net, bridge.pk)
+        name = bridge.name  # "n%d_%d" % (net, bridge.pk)
 
         if bridge:
             blinks = BridgeLink.objects.filter(
@@ -56,7 +57,7 @@ class Bridge(object):
     def create_peer_internal_ports(self):
         bridge = self.instance
         net = bridge.network_instance.pk
-        name = "n%d_%d" % (net, bridge.pk)
+        name = bridge.name  # "n%d_%d" % (net, bridge.pk)
         if bridge:
             peers = BridgeLink.objects.filter(
                 related_bridges=bridge).distinct()
