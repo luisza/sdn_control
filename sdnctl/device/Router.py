@@ -54,7 +54,9 @@ class Router:
     def set_networks(self):
 
         for net in self.instance.network_set.all():
-            data = {"destination": net.network,
-                    "gateway": net.gateway}
+            data = {"destination": net.network,}
+            if net.gateway:
+                    data["gateway"] = net.gateway
+            print(self.url, json.dumps(data)
             response = requests.post(self.url, data=json.dumps(data))
             print(response.text)

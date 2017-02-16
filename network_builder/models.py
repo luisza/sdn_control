@@ -72,7 +72,7 @@ class RouterAddress(models.Model):
 
 class Network(models.Model):
     network = models.CharField(max_length=250)
-    gateway = models.GenericIPAddressField()
+    gateway = models.GenericIPAddressField(null=True, blank=True)
     router = models.ForeignKey(Router)
 
 
